@@ -1,0 +1,63 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isUnder10MB() {
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // ─── Iris Photos ─────────────────────────────────────────────────────────
+    // Path: users/{uid}/iris/{photoId}/original.jpg
+    //       users/{uid}/iris/{photoId}/cropped.jpg
+
+    match /users/{uid}/iris/{allPaths=**} {
+      // Only the owning user can read their iris photos
+      allow read: if isOwner(uid);
+
+      // Client can write (upload) — but only images under 10MB
+      // Path ownership is enforced by the uid segment
+      allow write: if isOwner(uid)
+        && isImage()
+        && isUnder10MB();
+
+      // Deletion is handled by Cloud Functions only (deleteUserData, deleteIrisPhoto)
+      allow delete: if false;
+    }
+
+    // ─── Product Images (public) ──────────────────────────────────────────────
+    // Path: products/{productId}/...
+
+    match /products/{allPaths=**} {
+      allow read: if true;   // Public CDN — no auth required
+      allow write: if false; // Admin SDK only
+    }
+
+    // ─── Order Preview Composites ─────────────────────────────────────────────
+    // Path: orders/{orderId}/preview.jpg
+    // Served via short-lived signed URLs from Cloud Functions — no direct client access.
+
+    match /orders/{allPaths=**} {
+      allow read: if false;  // Use signed URLs from Cloud Function
+      allow write: if false; // Written by Cloud Function only
+    }
+
+    // ─── Default deny ─────────────────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

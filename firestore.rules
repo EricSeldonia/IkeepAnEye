@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isNotChanging(field) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == resource.data[field];
+    }
+
+    // ─── Products (public catalog) ───────────────────────────────────────────
+
+    match /products/{productId} {
+      // Anyone (including unauthenticated) can read active products
+      allow read: if resource.data.isActive == true;
+      // No client writes — managed via Firebase Admin / console
+      allow write: if false;
+    }
+
+    // ─── Users ───────────────────────────────────────────────────────────────
+
+    match /users/{uid} {
+      // Users can only read their own document
+      allow read: if isOwner(uid);
+
+      // Client can only update safe profile fields
+      // stripeCustomerId is CF-only (blocked here)
+      allow update: if isOwner(uid)
+        && isNotChanging('stripeCustomerId')
+        && isNotChanging('createdAt')
+        // Only allow updating display name, default shipping, lastSignInAt
+        && request.resource.data.keys().hasOnly([
+             'email', 'displayName', 'defaultShipping',
+             'lastSignInAt', 'stripeCustomerId', 'createdAt', 'fcmTokens'
+           ]);
+
+      // Created by Cloud Function (createUserRecord) only
+      allow create: if false;
+      allow delete: if false;
+
+      // ─── Iris Photos subcollection ─────────────────────────────────────────
+      match /irisPhotos/{photoId} {
+        // Users can read their own iris photos
+        allow read: if isOwner(uid);
+
+        // Client can create (upload after user confirmation)
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasAll(['originalStoragePath', 'croppedStoragePath', 'capturedAt', 'isActive', 'metadata'])
+          && request.resource.data.isActive == true;
+
+        // Updates and deletes are Cloud Function only
+        // (deleteIrisPhoto CF handles cleanup)
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // ─── Orders ──────────────────────────────────────────────────────────────
+
+    match /orders/{orderId} {
+      // Users can only read their own orders
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      // Client can create an order if:
+      //   - userId matches their own UID
+      //   - status is pending_payment
+      //   - no payment field is set (payment written by CF only)
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending_payment'
+        && !('payment' in request.resource.data)
+        && request.resource.data.keys().hasAll([
+             'userId', 'status', 'irisPhotoId', 'irisPhotoStoragePath',
+             'productId', 'productSnapshot', 'shipping', 'pricing',
+             'createdAt', 'updatedAt'
+           ]);
+
+      // Client can only update shipping address on pending orders
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && resource.data.status == 'pending_payment'
+        && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['shipping', 'updatedAt'])
+        // Never allow client to change payment or status
+        && isNotChanging('payment')
+        && isNotChanging('status')
+        && isNotChanging('userId');
+
+      allow delete: if false;
+    }
+  }
+}

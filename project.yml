@@ -1,0 +1,96 @@
+name: IkeepAnEye
+options:
+  bundleIdPrefix: com.ikeepaneye
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15"
+  generateEmptyDirectories: true
+  createIntermediateGroups: true
+
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: com.ikeepaneye.app
+    DEVELOPMENT_TEAM: ""  # Set your Apple Team ID here
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1"  # iPhone only
+    ENABLE_HARDENED_RUNTIME: YES
+    OTHER_SWIFT_FLAGS: ""
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "10.0.0"
+  Stripe:
+    url: https://github.com/stripe/stripe-ios
+    from: "23.0.0"
+  SDWebImageSwiftUI:
+    url: https://github.com/SDWebImage/SDWebImageSwiftUI
+    from: "2.0.0"
+
+targets:
+  IkeepAnEye:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: IkeepAnEye
+        excludes:
+          - "**/*.md"
+    resources:
+      - IkeepAnEye/Resources
+    info:
+      path: IkeepAnEye/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: IkeepAnEye
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchStoryboardName: LaunchScreen
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSCameraUsageDescription: "IkeepAnEye needs camera access to photograph your eye for creating personalized iris jewelry."
+        NSPhotoLibraryUsageDescription: "IkeepAnEye can save and load iris photos from your photo library."
+        NSPhotoLibraryAddUsageDescription: "IkeepAnEye saves your pendant preview to your photo library."
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default Configuration
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - com.ikeepaneye.app
+    entitlements:
+      path: IkeepAnEye/Resources/IkeepAnEye.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.ikeepaneye.app
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseStorage
+      - package: Firebase
+        product: FirebaseFunctions
+      - package: Firebase
+        product: FirebaseCrashlytics
+      - package: Stripe
+        product: StripePaymentSheet
+      - package: SDWebImageSwiftUI
+        product: SDWebImageSwiftUI
+    scheme:
+      testTargets:
+        - IkeepAnEyeTests
+
+  IkeepAnEyeTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: IkeepAnEyeTests
+    dependencies:
+      - target: IkeepAnEye

@@ -1,0 +1,116 @@
+import UIKit
+import Vision
+
+/// Runs on-device iris detection using Vision framework.
+/// All processing happens on a background queue — never blocks the main thread.
+final class IrisDetectionService {
+
+    enum DetectionError: LocalizedError {
+        case noFaceDetected
+        case noLandmarksDetected
+        case imageConversionFailed
+
+        var errorDescription: String? {
+            switch self {
+            case .noFaceDetected:        return "No face detected in the image."
+            case .noLandmarksDetected:   return "Face detected but eye landmarks could not be located."
+            case .imageConversionFailed: return "Could not prepare the image for analysis."
+            }
+        }
+    }
+
+    /// Detects the iris region in `image`, returning the highest-confidence result.
+    /// Throws `DetectionError` if detection fails.
+    func detect(in image: UIImage) async throws -> IrisRegion {
+        guard let cgImage = image.cgImage else { throw DetectionError.imageConversionFailed }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = VNDetectFaceLandmarksRequest { request, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                do {
+                    let region = try self.process(request: request, imageSize: image.size)
+                    continuation.resume(returning: region)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+            request.revision = VNDetectFaceLandmarksRequestRevision3
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    try handler.perform([request])
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    // MARK: - Private
+
+    private func process(request: VNRequest, imageSize: CGSize) throws -> IrisRegion {
+        guard let observations = request.results as? [VNFaceObservation],
+              let observation = observations.max(by: { $0.confidence < $1.confidence })
+        else { throw DetectionError.noFaceDetected }
+
+        guard let landmarks = observation.landmarks else { throw DetectionError.noLandmarksDetected }
+
+        // Pick the eye region with more normalizedPoints (better landmark coverage)
+        let leftEye  = landmarks.leftEye
+        let rightEye = landmarks.rightEye
+
+        let chosenEye: VNFaceLandmarkRegion2D
+        let eyeEnum: IrisRegion.Eye
+
+        switch (leftEye, rightEye) {
+        case let (l?, r?):
+            if (l.normalizedPoints?.count ?? 0) >= (r.normalizedPoints?.count ?? 0) {
+                chosenEye = l; eyeEnum = .left
+            } else {
+                chosenEye = r; eyeEnum = .right
+            }
+        case (let l?, nil): chosenEye = l; eyeEnum = .left
+        case (nil, let r?): chosenEye = r; eyeEnum = .right
+        default: throw DetectionError.noLandmarksDetected
+        }
+
+        guard let points = chosenEye.normalizedPoints, !points.isEmpty else {
+            throw DetectionError.noLandmarksDetected
+        }
+
+        // Points are relative to the face bounding box — convert to full-image normalized space
+        let faceBB = observation.boundingBox
+        let imagePoints = points.map { pt in
+            CGPoint(
+                x: faceBB.origin.x + pt.x * faceBB.width,
+                y: faceBB.origin.y + pt.y * faceBB.height
+            )
+        }
+
+        let minX = imagePoints.map(\.x).min()!
+        let maxX = imagePoints.map(\.x).max()!
+        let minY = imagePoints.map(\.y).min()!
+        let maxY = imagePoints.map(\.y).max()!
+
+        var visionRect = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+
+        // Add 15% padding on each side to capture the full iris/limbal ring
+        let padX = visionRect.width  * 0.15
+        let padY = visionRect.height * 0.15
+        visionRect = visionRect.insetBy(dx: -padX, dy: -padY)
+        visionRect = visionRect.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+
+        // Convert Vision space (bottom-left origin, normalized) → UIKit pixel space
+        let uiRect = UIImage.visionRectToUIKit(visionRect, imageSize: imageSize)
+
+        return IrisRegion(
+            rect: uiRect,
+            confidence: Double(observation.confidence),
+            eye: eyeEnum
+        )
+    }
+}

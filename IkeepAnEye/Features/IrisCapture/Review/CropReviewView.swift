@@ -1,0 +1,123 @@
+import SwiftUI
+
+struct CropReviewView: View {
+    let image: UIImage
+    let onAccept: (UIImage) -> Void
+    let onRetake: () -> Void
+
+    @State private var cropRect: CGRect = .zero
+    @State private var isDetecting = true
+    @State private var detectionError: String?
+    @State private var viewSize: CGSize = .zero
+
+    private let detectionService = IrisDetectionService()
+
+    var body: some View {
+        NavigationStack {
+            GeometryReader { geo in
+                ZStack {
+                    Color.black.ignoresSafeArea()
+
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: geo.size.width, height: geo.size.height)
+
+                    if !cropRect.isEmpty {
+                        CropAdjustmentOverlay(rect: $cropRect, viewSize: geo.size)
+                    }
+
+                    if isDetecting {
+                        ProgressView("Detecting iris…")
+                            .padding(16)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+                .onAppear {
+                    viewSize = geo.size
+                    Task { await runDetection(in: geo.size) }
+                }
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .navigationTitle("Adjust Crop")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Retake", role: .destructive) { onRetake() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Use Photo") { acceptCrop() }
+                        .disabled(cropRect.isEmpty)
+                        .bold()
+                }
+            }
+            .alert("Detection Failed", isPresented: Binding(
+                get: { detectionError != nil },
+                set: { if !$0 { detectionError = nil } }
+            )) {
+                Button("Manual Crop") { setDefaultCrop() }
+                Button("Retake", role: .destructive) { onRetake() }
+            } message: {
+                Text(detectionError ?? "")
+            }
+        }
+    }
+
+    private func runDetection(in containerSize: CGSize) async {
+        do {
+            let region = try await detectionService.detect(in: image)
+            cropRect = imageRectToViewRect(region.rect, containerSize: containerSize)
+        } catch {
+            detectionError = error.localizedDescription
+        }
+        isDetecting = false
+    }
+
+    private func setDefaultCrop() {
+        let side = min(viewSize.width, viewSize.height) * 0.4
+        cropRect = CGRect(
+            x: (viewSize.width  - side) / 2,
+            y: (viewSize.height - side) / 2,
+            width: side, height: side
+        )
+        isDetecting = false
+    }
+
+    private func acceptCrop() {
+        let imageRect = viewRectToImageRect(cropRect)
+        guard let cropped = image.cropped(to: imageRect) else { return }
+        onAccept(cropped.circularCropped)
+    }
+
+    // MARK: - Coordinate Conversion
+
+    private func imageRectToViewRect(_ imageRect: CGRect, containerSize: CGSize) -> CGRect {
+        let scale = min(containerSize.width / image.size.width,
+                        containerSize.height / image.size.height)
+        let scaledW = image.size.width  * scale
+        let scaledH = image.size.height * scale
+        let offsetX = (containerSize.width  - scaledW) / 2
+        let offsetY = (containerSize.height - scaledH) / 2
+        return CGRect(
+            x: imageRect.origin.x * scale + offsetX,
+            y: imageRect.origin.y * scale + offsetY,
+            width:  imageRect.width  * scale,
+            height: imageRect.height * scale
+        )
+    }
+
+    private func viewRectToImageRect(_ viewRect: CGRect) -> CGRect {
+        let scale = min(viewSize.width / image.size.width,
+                        viewSize.height / image.size.height)
+        let scaledW = image.size.width  * scale
+        let scaledH = image.size.height * scale
+        let offsetX = (viewSize.width  - scaledW) / 2
+        let offsetY = (viewSize.height - scaledH) / 2
+        return CGRect(
+            x: (viewRect.origin.x - offsetX) / scale,
+            y: (viewRect.origin.y - offsetY) / scale,
+            width:  viewRect.width  / scale,
+            height: viewRect.height / scale
+        )
+    }
+}
