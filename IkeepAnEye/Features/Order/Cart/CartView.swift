@@ -1,90 +1,47 @@
 import SwiftUI
 
 struct CartView: View {
-    let product: Product
-    let irisPhoto: IrisPhoto
-    let compositeImage: UIImage?
-
-    @StateObject private var viewModel: CartViewModel
+    @EnvironmentObject private var cartStore: CartStore
+    @StateObject private var viewModel = CartViewModel()
     @State private var showAddressSheet = false
-    @State private var showCheckout = false
-
-    init(product: Product, irisPhoto: IrisPhoto, compositeImage: UIImage?) {
-        self.product = product
-        self.irisPhoto = irisPhoto
-        self.compositeImage = compositeImage
-        _viewModel = StateObject(wrappedValue: CartViewModel(
-            product: product,
-            irisPhoto: irisPhoto,
-            compositeImage: compositeImage
-        ))
-    }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Product summary
-                HStack(spacing: 12) {
-                    AsyncImage(url: URL(string: product.imageURLs.first ?? "")) { phase in
-                        if case .success(let img) = phase { img.resizable().scaledToFill() }
-                        else { Color(.secondarySystemBackground) }
+        List {
+            Section("Items") {
+                if cartStore.items.isEmpty {
+                    Text("Your cart is empty")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(cartStore.items) { item in
+                        CartItemRow(item: item)
                     }
-                    .frame(width: 80, height: 80)
-                    .cornerRadius(8)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(product.name).font(.headline)
-                        Text(product.material).font(.caption).foregroundColor(.secondary)
-                        Text(product.chain.length + " " + product.chain.style)
-                            .font(.caption).foregroundColor(.secondary)
-                    }
-                    Spacer()
-                    Text(product.formattedPrice).font(.headline)
+                    .onDelete { cartStore.remove(at: $0) }
                 }
-                .cardStyle()
-                .padding(.horizontal)
-
-                // Shipping address
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Shipping Address").font(.headline)
-                        Spacer()
-                        Button("Edit") { showAddressSheet = true }
-                            .font(.subheadline)
-                    }
-                    if let address = viewModel.shipping {
-                        Text(address.formatted)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Button("Add Address") { showAddressSheet = true }
-                            .buttonStyle(SecondaryButtonStyle())
-                    }
-                }
-                .padding()
-                .cardStyle()
-                .padding(.horizontal)
-
-                // Pricing summary
-                VStack(spacing: 8) {
-                    PricingRow(label: "Subtotal", cents: viewModel.subtotal)
-                    PricingRow(label: "Shipping", cents: viewModel.shippingCost)
-                    PricingRow(label: "Tax (est.)", cents: viewModel.tax)
-                    Divider()
-                    PricingRow(label: "Total", cents: viewModel.total, bold: true)
-                }
-                .padding()
-                .cardStyle()
-                .padding(.horizontal)
-
-                Button("Proceed to Payment") {
-                    Task { await viewModel.placeOrder() }
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(!viewModel.canProceed || viewModel.isLoading)
-                .padding(.horizontal)
             }
-            .padding(.vertical)
+
+            Section("Shipping") {
+                HStack {
+                    Text("Address").font(.subheadline)
+                    Spacer()
+                    Button("Edit") { showAddressSheet = true }
+                        .font(.subheadline)
+                }
+                if let address = viewModel.shipping {
+                    Text(address.formatted)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    Button("Add Address") { showAddressSheet = true }
+                        .font(.subheadline)
+                }
+            }
+
+            Section("Summary") {
+                PricingRow(label: "Subtotal", cents: viewModel.subtotal(items: cartStore.items))
+                PricingRow(label: "Shipping", cents: viewModel.shippingCost)
+                PricingRow(label: "Tax (est.)", cents: viewModel.tax(items: cartStore.items))
+                PricingRow(label: "Total", cents: viewModel.total(items: cartStore.items), bold: true)
+            }
         }
         .navigationTitle("Cart")
         .navigationDestination(isPresented: Binding(
@@ -95,11 +52,49 @@ struct CartView: View {
                 CheckoutView(order: order)
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            Button("Proceed to Payment") {
+                Task { await viewModel.placeOrders(items: cartStore.items) }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(!viewModel.canProceed(items: cartStore.items) || viewModel.isLoading)
+            .padding()
+            .background(Color(.systemBackground))
+        }
         .sheet(isPresented: $showAddressSheet) {
             AddressEntryView(address: $viewModel.shipping)
         }
         .loadingOverlay(viewModel.isLoading)
         .errorAlert(message: $viewModel.errorMessage)
+    }
+}
+
+private struct CartItemRow: View {
+    let item: CartItem
+
+    var body: some View {
+        HStack(spacing: 12) {
+            AsyncImage(url: URL(string: item.product.imageURLs.first ?? "")) { phase in
+                if case .success(let img) = phase { img.resizable().scaledToFill() }
+                else { Color(.secondarySystemBackground) }
+            }
+            .frame(width: 56, height: 56)
+            .cornerRadius(8)
+            .clipped()
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.product.name)
+                    .font(.subheadline.weight(.medium))
+                if item.irisPhoto != nil {
+                    Text("Personalized")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                }
+            }
+            Spacer()
+            Text(item.product.formattedPrice)
+                .font(.subheadline)
+        }
     }
 }
 

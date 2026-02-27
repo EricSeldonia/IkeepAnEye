@@ -64,6 +64,14 @@ struct CameraView: View {
                                 .shadow(radius: 4)
                         }
                         Spacer()
+                        Button {
+                            Task { await sessionManager.switchCamera() }
+                        } label: {
+                            Image(systemName: "camera.rotate.fill")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .shadow(radius: 4)
+                        }
                         // Library shortcut even when camera is present
                         PhotosPicker(selection: $photosPickerItem, matching: .images) {
                             Image(systemName: "photo.on.rectangle")

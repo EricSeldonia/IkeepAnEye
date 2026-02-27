@@ -5,8 +5,8 @@ struct Order: Codable, Identifiable, Hashable {
     @DocumentID var id: String?
     var userId: String
     var status: OrderStatus
-    var irisPhotoId: String
-    var irisPhotoStoragePath: String
+    var irisPhotoId: String?
+    var irisPhotoStoragePath: String?
     var productId: String
     var productSnapshot: ProductSnapshot
     var previewCompositeStoragePath: String?

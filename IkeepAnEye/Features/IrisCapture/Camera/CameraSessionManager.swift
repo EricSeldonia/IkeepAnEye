@@ -1,13 +1,14 @@
 import AVFoundation
 import UIKit
 
-/// Manages the AVCaptureSession for front-camera still photo capture.
+/// Manages the AVCaptureSession for still photo capture with front/rear support.
 @MainActor
 final class CameraSessionManager: NSObject, ObservableObject {
     let session = AVCaptureSession()
 
     @Published var isRunning = false
     @Published var permissionDenied = false
+    @Published var currentPosition: AVCaptureDevice.Position = .front
 
     private var photoOutput = AVCapturePhotoOutput()
     private var photoContinuation: CheckedContinuation<UIImage, Error>?
@@ -38,6 +39,29 @@ final class CameraSessionManager: NSObject, ObservableObject {
         guard session.isRunning else { return }
         Task.detached { [session] in session.stopRunning() }
         isRunning = false
+    }
+
+    func switchCamera() async {
+        let newPosition: AVCaptureDevice.Position = (currentPosition == .front) ? .back : .front
+        let sess = session
+        await Task.detached {
+            sess.beginConfiguration()
+            for input in sess.inputs {
+                if let deviceInput = input as? AVCaptureDeviceInput,
+                   deviceInput.device.hasMediaType(.video) {
+                    sess.removeInput(deviceInput)
+                }
+            }
+            let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newPosition)
+                ?? AVCaptureDevice.default(for: .video)
+            if let device,
+               let input = try? AVCaptureDeviceInput(device: device),
+               sess.canAddInput(input) {
+                sess.addInput(input)
+            }
+            sess.commitConfiguration()
+        }.value
+        currentPosition = newPosition
     }
 
     func capturePhoto() async throws -> UIImage {

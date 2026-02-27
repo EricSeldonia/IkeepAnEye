@@ -1,41 +1,37 @@
-import UIKit
+import Foundation
 
 @MainActor
 final class CartViewModel: ObservableObject {
-    let product: Product
-    let irisPhoto: IrisPhoto
-    let compositeImage: UIImage?
-
     @Published var shipping: Address?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var createdOrder: Order?
 
-    init(product: Product, irisPhoto: IrisPhoto, compositeImage: UIImage?) {
-        self.product = product
-        self.irisPhoto = irisPhoto
-        self.compositeImage = compositeImage
-    }
+    init() {}
 
-    var canProceed: Bool { shipping != nil }
+    func canProceed(items: [CartItem]) -> Bool { shipping != nil && !items.isEmpty }
 
-    var subtotal: Int  { product.priceInCents }
+    func subtotal(items: [CartItem]) -> Int { items.reduce(0) { $0 + $1.product.priceInCents } }
     var shippingCost: Int { 999 }
-    var tax: Int       { Int(Double(subtotal) * 0.08) }
-    var total: Int     { subtotal + shippingCost + tax }
+    func tax(items: [CartItem]) -> Int { Int(Double(subtotal(items: items)) * 0.08) }
+    func total(items: [CartItem]) -> Int { subtotal(items: items) + shippingCost + tax(items: items) }
 
-    func placeOrder() async {
-        guard let shipping else { return }
+    func placeOrders(items: [CartItem]) async {
+        guard let shipping, !items.isEmpty else { return }
         isLoading = true
         defer { isLoading = false }
         do {
-            let order = try await OrderService.shared.createOrder(
-                product: product,
-                irisPhoto: irisPhoto,
-                shipping: shipping,
-                previewStoragePath: nil
-            )
-            createdOrder = order
+            var firstOrder: Order?
+            for item in items {
+                let order = try await OrderService.shared.createOrder(
+                    product: item.product,
+                    irisPhoto: item.irisPhoto,
+                    shipping: shipping,
+                    previewStoragePath: nil
+                )
+                if firstOrder == nil { firstOrder = order }
+            }
+            createdOrder = firstOrder
         } catch {
             errorMessage = error.localizedDescription
         }

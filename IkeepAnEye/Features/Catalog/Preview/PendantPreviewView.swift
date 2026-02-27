@@ -5,10 +5,11 @@ struct PendantPreviewView: View {
     let product: Product
     let irisPhoto: IrisPhoto
 
+    @EnvironmentObject private var cartStore: CartStore
+    @Environment(\.dismiss) private var dismiss
     @State private var irisImage: UIImage?
     @State private var isLoading = true
     @State private var errorMessage: String?
-    @State private var navigateToCart = false
     @State private var renderedComposite: UIImage?
 
     @MainActor
@@ -61,11 +62,14 @@ struct PendantPreviewView: View {
                 Text(product.formattedPrice)
                     .foregroundColor(.accentColor)
 
-                NavigationLink(destination: CartView(
-                    product: product,
-                    irisPhoto: irisPhoto,
-                    compositeImage: renderedComposite
-                )) {
+                Button {
+                    cartStore.add(CartItem(
+                        product: product,
+                        irisPhoto: irisPhoto,
+                        compositeImage: renderedComposite
+                    ))
+                    dismiss()
+                } label: {
                     Text("Add to Cart")
                 }
                 .buttonStyle(PrimaryButtonStyle())

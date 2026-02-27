@@ -13,13 +13,12 @@ final class OrderService: ObservableObject {
     /// Server-side price is always read from Firestore; never trust client price.
     func createOrder(
         product: Product,
-        irisPhoto: IrisPhoto,
+        irisPhoto: IrisPhoto?,
         shipping: Address,
         previewStoragePath: String?
     ) async throws -> Order {
         guard let uid = Auth.auth().currentUser?.uid,
-              let productId = product.id,
-              let irisPhotoId = irisPhoto.id else {
+              let productId = product.id else {
             throw OrderError.missingData
         }
 
@@ -32,8 +31,8 @@ final class OrderService: ObservableObject {
         let order = Order(
             userId: uid,
             status: .pendingPayment,
-            irisPhotoId: irisPhotoId,
-            irisPhotoStoragePath: irisPhoto.croppedStoragePath,
+            irisPhotoId: irisPhoto?.id,
+            irisPhotoStoragePath: irisPhoto?.croppedStoragePath,
             productId: productId,
             productSnapshot: .init(
                 name: product.name,
