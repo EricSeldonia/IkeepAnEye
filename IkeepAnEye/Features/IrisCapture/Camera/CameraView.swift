@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import PhotosUI
 
 struct CameraView: View {
     let onCapture: (UIImage) -> Void
@@ -7,61 +8,107 @@ struct CameraView: View {
     @StateObject private var sessionManager = CameraSessionManager()
     @State private var capturedImage: UIImage?
     @State private var isCapturing = false
+    @State private var photosPickerItem: PhotosPickerItem?
     @Environment(\.dismiss) private var dismiss
+
+    // True when there is no physical camera available (e.g. simulator on Mac Mini)
+    private var cameraUnavailable: Bool {
+        AVCaptureDevice.default(for: .video) == nil
+    }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            CameraPreviewLayer(session: sessionManager.session)
-                .ignoresSafeArea()
+            if cameraUnavailable {
+                // ── Photo library fallback (simulator / no camera) ──────────
+                VStack(spacing: 24) {
+                    Spacer()
+                    Image(systemName: "camera.slash.fill")
+                        .font(.system(size: 56))
+                        .foregroundColor(.white.opacity(0.6))
+                    Text("No camera available")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text("Pick an eye photo from your library to continue.")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
 
-            VStack {
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .shadow(radius: 4)
+                    PhotosPicker(selection: $photosPickerItem, matching: .images) {
+                        Text("Choose from Library")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 32)
+                            .padding(.vertical, 14)
+                            .background(Color.white)
+                            .cornerRadius(12)
                     }
                     Spacer()
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.bottom, 32)
                 }
-                .padding()
+            } else {
+                // ── Live camera preview ─────────────────────────────────────
+                CameraPreviewLayer(session: sessionManager.session)
+                    .ignoresSafeArea()
 
-                Spacer()
-
-                // Oval guide overlay
-                Ellipse()
-                    .strokeBorder(Color.white.opacity(0.7), lineWidth: 2)
-                    .frame(width: 220, height: 160)
-
-                Text("Position your eye inside the oval")
-                    .font(.caption)
-                    .foregroundColor(.white)
-                    .shadow(radius: 2)
-                    .padding(.top, 8)
-
-                Spacer()
-
-                Button {
-                    Task { await captureAndReview() }
-                } label: {
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.5), lineWidth: 4)
-                            .frame(width: 80, height: 80)
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 66, height: 66)
+                VStack {
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title)
+                                .foregroundColor(.white)
+                                .shadow(radius: 4)
+                        }
+                        Spacer()
+                        // Library shortcut even when camera is present
+                        PhotosPicker(selection: $photosPickerItem, matching: .images) {
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .shadow(radius: 4)
+                        }
                     }
+                    .padding()
+
+                    Spacer()
+
+                    Ellipse()
+                        .strokeBorder(Color.white.opacity(0.7), lineWidth: 2)
+                        .frame(width: 220, height: 160)
+
+                    Text("Position your eye inside the oval")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .shadow(radius: 2)
+                        .padding(.top, 8)
+
+                    Spacer()
+
+                    Button {
+                        Task { await captureAndReview() }
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .stroke(Color.white.opacity(0.5), lineWidth: 4)
+                                .frame(width: 80, height: 80)
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 66, height: 66)
+                        }
+                    }
+                    .disabled(isCapturing)
+                    .padding(.bottom, 48)
                 }
-                .disabled(isCapturing)
-                .padding(.bottom, 48)
             }
         }
+        // Review sheet — used for both camera capture and library pick
         .sheet(isPresented: Binding(
             get: { capturedImage != nil },
-            set: { if !$0 { capturedImage = nil; sessionManager.start() } }
+            set: { if !$0 { capturedImage = nil; if !cameraUnavailable { sessionManager.start() } } }
         )) {
             if let img = capturedImage {
                 CropReviewView(
@@ -72,15 +119,28 @@ struct CameraView: View {
                     },
                     onRetake: {
                         capturedImage = nil
-                        sessionManager.start()
+                        if !cameraUnavailable { sessionManager.start() }
                     }
                 )
             }
         }
+        // Handle photo library selection
+        .onChange(of: photosPickerItem) { item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    capturedImage = image
+                }
+                photosPickerItem = nil
+            }
+        }
         .loadingOverlay(isCapturing)
         .task {
-            await sessionManager.checkPermissionAndConfigure()
-            sessionManager.start()
+            if !cameraUnavailable {
+                await sessionManager.checkPermissionAndConfigure()
+                sessionManager.start()
+            }
         }
         .onDisappear { sessionManager.stop() }
         .alert("Camera Access Denied", isPresented: $sessionManager.permissionDenied) {
@@ -103,7 +163,7 @@ struct CameraView: View {
             sessionManager.stop()
             capturedImage = image
         } catch {
-            // In a shipping app, show an error alert here
+            // fall through — user can retry
         }
     }
 }

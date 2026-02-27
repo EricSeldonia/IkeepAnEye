@@ -87,8 +87,13 @@ struct CartView: View {
             .padding(.vertical)
         }
         .navigationTitle("Cart")
-        .navigationDestination(item: $viewModel.createdOrder) { order in
-            CheckoutView(order: order)
+        .navigationDestination(isPresented: Binding(
+            get: { viewModel.createdOrder != nil },
+            set: { if !$0 { viewModel.createdOrder = nil } }
+        )) {
+            if let order = viewModel.createdOrder {
+                CheckoutView(order: order)
+            }
         }
         .sheet(isPresented: $showAddressSheet) {
             AddressEntryView(address: $viewModel.shipping)

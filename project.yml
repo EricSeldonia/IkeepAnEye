@@ -10,7 +10,7 @@ options:
 settings:
   base:
     PRODUCT_BUNDLE_IDENTIFIER: com.ikeepaneye.app
-    DEVELOPMENT_TEAM: ""  # Set your Apple Team ID here
+    DEVELOPMENT_TEAM: ""  # TODO: paste your 10-character Team ID here, e.g. "ABC123DEF4"
     SWIFT_VERSION: "5.9"
     IPHONEOS_DEPLOYMENT_TARGET: "16.0"
     TARGETED_DEVICE_FAMILY: "1"  # iPhone only
@@ -63,8 +63,6 @@ targets:
     entitlements:
       path: IkeepAnEye/Resources/IkeepAnEye.entitlements
       properties:
-        com.apple.developer.applesignin:
-          - Default
         keychain-access-groups:
           - $(AppIdentifierPrefix)com.ikeepaneye.app
     dependencies:

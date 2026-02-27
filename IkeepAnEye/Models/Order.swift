@@ -1,7 +1,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct Order: Codable, Identifiable {
+struct Order: Codable, Identifiable, Hashable {
     @DocumentID var id: String?
     var userId: String
     var status: OrderStatus
@@ -18,13 +18,13 @@ struct Order: Codable, Identifiable {
     var createdAt: Timestamp
     var updatedAt: Timestamp
 
-    struct ProductSnapshot: Codable {
+    struct ProductSnapshot: Codable, Hashable {
         var name: String
         var priceInCents: Int
         var imageURL: String
     }
 
-    struct Pricing: Codable {
+    struct Pricing: Codable, Hashable {
         var subtotalCents: Int
         var shippingCents: Int
         var taxCents: Int
@@ -32,14 +32,14 @@ struct Order: Codable, Identifiable {
     }
 
     // Written by Cloud Function only
-    struct PaymentInfo: Codable {
+    struct PaymentInfo: Codable, Hashable {
         var stripePaymentIntentId: String
         var stripeChargeId: String?
         var status: String
         var paidAt: Timestamp?
     }
 
-    struct FulfillmentInfo: Codable {
+    struct FulfillmentInfo: Codable, Hashable {
         var trackingNumber: String?
         var carrier: String?
         var shippedAt: Timestamp?

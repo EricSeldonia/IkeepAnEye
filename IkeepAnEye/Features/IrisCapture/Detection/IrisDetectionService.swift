@@ -25,26 +25,37 @@ final class IrisDetectionService {
         guard let cgImage = image.cgImage else { throw DetectionError.imageConversionFailed }
 
         return try await withCheckedThrowingContinuation { continuation in
+            var resumed = false
+            func resume(with result: Result<IrisRegion, Error>) {
+                guard !resumed else { return }
+                resumed = true
+                switch result {
+                case .success(let r): continuation.resume(returning: r)
+                case .failure(let e): continuation.resume(throwing: e)
+                }
+            }
+
             let request = VNDetectFaceLandmarksRequest { request, error in
                 if let error {
-                    continuation.resume(throwing: error)
+                    resume(with: .failure(error))
                     return
                 }
                 do {
                     let region = try self.process(request: request, imageSize: image.size)
-                    continuation.resume(returning: region)
+                    resume(with: .success(region))
                 } catch {
-                    continuation.resume(throwing: error)
+                    resume(with: .failure(error))
                 }
             }
             request.revision = VNDetectFaceLandmarksRequestRevision3
 
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            // Create handler inside the async closure to satisfy Sendable requirements
             DispatchQueue.global(qos: .userInitiated).async {
+                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
                 do {
                     try handler.perform([request])
                 } catch {
-                    continuation.resume(throwing: error)
+                    resume(with: .failure(error))
                 }
             }
         }
@@ -68,7 +79,7 @@ final class IrisDetectionService {
 
         switch (leftEye, rightEye) {
         case let (l?, r?):
-            if (l.normalizedPoints?.count ?? 0) >= (r.normalizedPoints?.count ?? 0) {
+            if l.normalizedPoints.count >= r.normalizedPoints.count {
                 chosenEye = l; eyeEnum = .left
             } else {
                 chosenEye = r; eyeEnum = .right
@@ -78,23 +89,26 @@ final class IrisDetectionService {
         default: throw DetectionError.noLandmarksDetected
         }
 
-        guard let points = chosenEye.normalizedPoints, !points.isEmpty else {
+        let points = chosenEye.normalizedPoints
+        guard !points.isEmpty else {
             throw DetectionError.noLandmarksDetected
         }
 
         // Points are relative to the face bounding box — convert to full-image normalized space
         let faceBB = observation.boundingBox
-        let imagePoints = points.map { pt in
+        let imagePoints: [CGPoint] = points.map { pt in
             CGPoint(
                 x: faceBB.origin.x + pt.x * faceBB.width,
                 y: faceBB.origin.y + pt.y * faceBB.height
             )
         }
 
-        let minX = imagePoints.map(\.x).min()!
-        let maxX = imagePoints.map(\.x).max()!
-        let minY = imagePoints.map(\.y).min()!
-        let maxY = imagePoints.map(\.y).max()!
+        guard let minX = imagePoints.map(\.x).min(),
+              let maxX = imagePoints.map(\.x).max(),
+              let minY = imagePoints.map(\.y).min(),
+              let maxY = imagePoints.map(\.y).max() else {
+            throw DetectionError.noLandmarksDetected
+        }
 
         var visionRect = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
 

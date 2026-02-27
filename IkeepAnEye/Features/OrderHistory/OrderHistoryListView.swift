@@ -10,11 +10,17 @@ struct OrderHistoryListView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.orders.isEmpty {
-                ContentUnavailableView(
-                    "No Orders Yet",
-                    systemImage: "shippingbox",
-                    description: Text("Your orders will appear here.")
-                )
+                VStack(spacing: 12) {
+                    Image(systemName: "shippingbox")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
+                    Text("No Orders Yet")
+                        .font(.headline)
+                    Text("Your orders will appear here.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(viewModel.orders) { order in
                     NavigationLink(destination: OrderDetailView(orderId: order.id ?? "")) {

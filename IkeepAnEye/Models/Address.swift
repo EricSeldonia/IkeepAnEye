@@ -1,6 +1,6 @@
 import Foundation
 
-struct Address: Codable, Equatable {
+struct Address: Codable, Equatable, Hashable {
     var fullName: String
     var line1: String
     var line2: String?

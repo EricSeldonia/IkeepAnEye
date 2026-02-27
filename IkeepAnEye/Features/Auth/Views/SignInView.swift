@@ -1,5 +1,4 @@
 import SwiftUI
-import AuthenticationServices
 
 struct SignInView: View {
     @StateObject private var viewModel = SignInViewModel()
@@ -39,21 +38,6 @@ struct SignInView: View {
                 }
                 .font(.subheadline)
                 .foregroundColor(.accentColor)
-
-                HStack {
-                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
-                    Text("or").foregroundColor(.secondary).font(.caption).fixedSize()
-                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
-                }
-
-                SignInWithAppleButton(.signIn) { request in
-                    viewModel.prepareAppleRequest(request)
-                } onCompletion: { result in
-                    Task { await viewModel.handleAppleResult(result) }
-                }
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 50)
-                .cornerRadius(10)
             }
             .padding(.horizontal, 24)
         }
@@ -94,29 +78,6 @@ final class SignInViewModel: ObservableObject {
             try await authService.sendPasswordReset(email: email)
         } catch {
             errorMessage = error.localizedDescription
-        }
-    }
-
-    func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
-        let (req, _) = authService.startSIWARequest()
-        request.requestedScopes = req.requestedScopes
-        request.nonce = req.nonce
-    }
-
-    func handleAppleResult(_ result: Result<ASAuthorization, Error>) async {
-        switch result {
-        case .success(let auth):
-            isLoading = true
-            defer { isLoading = false }
-            do {
-                try await authService.completeSIWASignIn(with: auth)
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        case .failure(let error):
-            if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
-                errorMessage = error.localizedDescription
-            }
         }
     }
 }

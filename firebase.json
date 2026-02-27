@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "storage": {
+    "bucket": "ikeepaneye-4a2d8.firebasestorage.app",
     "rules": "storage.rules"
   },
   "functions": [

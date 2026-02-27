@@ -47,6 +47,7 @@
 		86FF726D0DD82F862423AD14 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 582C2FE16C184D7A3E739EB6 /* FirebaseFunctions */; };
 		8BF2E9356D8F98992D16A2B0 /* OrderDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC51771F4B7E99DF0C27924 /* OrderDetailView.swift */; };
 		8D053ACC4E0A4C68EAB6F5CE /* ManageIrisPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EE721D2E53F5D7C468CB5D8 /* ManageIrisPhotosView.swift */; };
+		99AD49CCD4E7290D3A135770 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4BF343711ED9C327229D6605 /* GoogleService-Info.plist */; };
 		9A07859DAA863F38276DF09C /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC20E4AFB72D034C7B376A12 /* Product.swift */; };
 		9F3EC12BFCC206028AF3EACF /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98DC4F21A01E7934FC1F4B6C /* User.swift */; };
 		A84F3FADB0B637E29447B78B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 59DD9E2861D9EF7EEBB85D9D /* FirebaseAuth */; };
@@ -91,6 +92,7 @@
 		41677362B3A6CB4DB92967E2 /* ServiceLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceLocator.swift; sourceTree = "<group>"; };
 		41886FFA3C37392C8AABDEC4 /* ShippingAddressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShippingAddressView.swift; sourceTree = "<group>"; };
 		43F0AC337592FD9C3344078A /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		4BF343711ED9C327229D6605 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		537F1E00556842814928F499 /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
 		60234537EC589A52B55218EA /* IrisUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrisUploadService.swift; sourceTree = "<group>"; };
 		611AF17EF508B40FDF2DDA47 /* IrisRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrisRegion.swift; sourceTree = "<group>"; };
@@ -310,6 +312,7 @@
 		5310E149B43EC9F328285E07 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				4BF343711ED9C327229D6605 /* GoogleService-Info.plist */,
 				20A4C128C49BA82BAE40A761 /* IkeepAnEye.entitlements */,
 				C9E634ACB6C5D3AA6F9F3781 /* Info.plist */,
 				E6B2966D2292453E485DCDDF /* PrivacyInfo.xcprivacy */,
@@ -549,6 +552,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				99AD49CCD4E7290D3A135770 /* GoogleService-Info.plist in Resources */,
 				C6CBF6C62701A10E12419CA4 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

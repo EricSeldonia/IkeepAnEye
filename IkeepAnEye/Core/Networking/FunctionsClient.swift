@@ -22,10 +22,7 @@ final class FunctionsClient {
     ) async throws -> Response {
         let encoded = try encodeToDict(data)
         let result = try await functions.httpsCallable(name).call(encoded)
-        guard let resultData = result.data else {
-            throw FunctionsClientError.emptyResponse
-        }
-        let jsonData = try JSONSerialization.data(withJSONObject: resultData)
+        let jsonData = try JSONSerialization.data(withJSONObject: result.data)
         return try JSONDecoder().decode(Response.self, from: jsonData)
     }
 

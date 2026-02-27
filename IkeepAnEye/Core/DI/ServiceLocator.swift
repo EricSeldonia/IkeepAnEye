@@ -9,8 +9,7 @@ final class ServiceLocator {
     private var services: [ObjectIdentifier: Any] = [:]
 
     func register<T>(_ service: T) {
-        let key = ObjectIdentifier(type(of: service) as AnyObject.Type)
-        services[key] = service
+        services[ObjectIdentifier(T.self)] = service
     }
 
     func register<T>(_ service: T, as type: T.Type) {

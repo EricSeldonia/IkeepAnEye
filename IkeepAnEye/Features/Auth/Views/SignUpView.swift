@@ -1,5 +1,4 @@
 import SwiftUI
-import AuthenticationServices
 
 struct SignUpView: View {
     @StateObject private var viewModel = SignUpViewModel()
@@ -39,21 +38,6 @@ struct SignUpView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(!viewModel.isValid || viewModel.isLoading)
-
-                HStack {
-                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
-                    Text("or").foregroundColor(.secondary).font(.caption).fixedSize()
-                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
-                }
-
-                SignInWithAppleButton(.signUp) { request in
-                    viewModel.prepareAppleRequest(request)
-                } onCompletion: { result in
-                    Task { await viewModel.handleAppleResult(result) }
-                }
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 50)
-                .cornerRadius(10)
 
                 Text("By creating an account you agree to our Terms of Service and Privacy Policy.")
                     .font(.caption)
@@ -96,29 +80,6 @@ final class SignUpViewModel: ObservableObject {
             )
         } catch {
             errorMessage = error.localizedDescription
-        }
-    }
-
-    func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
-        let (req, _) = authService.startSIWARequest()
-        request.requestedScopes = req.requestedScopes
-        request.nonce = req.nonce
-    }
-
-    func handleAppleResult(_ result: Result<ASAuthorization, Error>) async {
-        switch result {
-        case .success(let auth):
-            isLoading = true
-            defer { isLoading = false }
-            do {
-                try await authService.completeSIWASignIn(with: auth)
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        case .failure(let error):
-            if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
-                errorMessage = error.localizedDescription
-            }
         }
     }
 }

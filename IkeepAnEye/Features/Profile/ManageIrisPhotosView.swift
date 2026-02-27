@@ -14,11 +14,17 @@ struct ManageIrisPhotosView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.photos.isEmpty {
                 VStack(spacing: 16) {
-                    ContentUnavailableView(
-                        "No Iris Photos",
-                        systemImage: "eye.slash",
-                        description: Text("Capture your first iris photo to get started.")
-                    )
+                    VStack(spacing: 12) {
+                        Image(systemName: "eye.slash")
+                            .font(.system(size: 48))
+                            .foregroundColor(.secondary)
+                        Text("No Iris Photos")
+                            .font(.headline)
+                        Text("Capture your first iris photo to get started.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
                     Button("Capture My Eye") { showCapture = true }
                         .buttonStyle(PrimaryButtonStyle())
                         .padding(.horizontal, 40)

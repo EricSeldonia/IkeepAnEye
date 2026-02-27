@@ -15,11 +15,17 @@ struct CatalogGridView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.products.isEmpty {
-                ContentUnavailableView(
-                    "No Products",
-                    systemImage: "sparkles",
-                    description: Text("Check back soon for new designs.")
-                )
+                VStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
+                    Text("No Products")
+                        .font(.headline)
+                    Text("Check back soon for new designs.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 12) {

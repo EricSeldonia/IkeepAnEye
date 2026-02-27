@@ -59,7 +59,12 @@ final class CameraSessionManager: NSObject, ObservableObject {
         session.beginConfiguration()
         session.sessionPreset = .photo
 
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+        // Prefer front camera; fall back to any available video device (e.g. USB webcam)
+        let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
+            ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
+            ?? AVCaptureDevice.default(for: .video)
+
+        guard let device,
               let input = try? AVCaptureDeviceInput(device: device),
               session.canAddInput(input) else {
             session.commitConfiguration()
