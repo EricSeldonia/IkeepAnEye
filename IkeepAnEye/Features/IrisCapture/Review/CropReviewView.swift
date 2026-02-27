@@ -7,7 +7,6 @@ struct CropReviewView: View {
 
     @State private var cropRect: CGRect = .zero
     @State private var isDetecting = true
-    @State private var detectionError: String?
     @State private var viewSize: CGSize = .zero
 
     private let detectionService = IrisDetectionService()
@@ -35,6 +34,8 @@ struct CropReviewView: View {
                 }
                 .onAppear {
                     viewSize = geo.size
+                    // Always set a default crop immediately so "Use Photo" is never blocked
+                    setDefaultCrop(in: geo.size)
                     Task { await runDetection(in: geo.size) }
                 }
             }
@@ -47,40 +48,35 @@ struct CropReviewView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Use Photo") { acceptCrop() }
-                        .disabled(cropRect.isEmpty)
                         .bold()
                 }
             }
-            .alert("Detection Failed", isPresented: Binding(
-                get: { detectionError != nil },
-                set: { if !$0 { detectionError = nil } }
-            )) {
-                Button("Manual Crop") { setDefaultCrop() }
-                Button("Retake", role: .destructive) { onRetake() }
-            } message: {
-                Text(detectionError ?? "")
-            }
         }
     }
+
+    // MARK: - Detection
 
     private func runDetection(in containerSize: CGSize) async {
         do {
             let region = try await detectionService.detect(in: image)
+            // Update crop rect with detected iris position
             cropRect = imageRectToViewRect(region.rect, containerSize: containerSize)
         } catch {
-            detectionError = error.localizedDescription
+            // Detection failed — default crop set in onAppear remains active
         }
         isDetecting = false
     }
 
-    private func setDefaultCrop() {
-        let side = min(viewSize.width, viewSize.height) * 0.4
+    // MARK: - Crop helpers
+
+    private func setDefaultCrop(in containerSize: CGSize) {
+        let side = min(containerSize.width, containerSize.height) * 0.4
         cropRect = CGRect(
-            x: (viewSize.width  - side) / 2,
-            y: (viewSize.height - side) / 2,
-            width: side, height: side
+            x: (containerSize.width  - side) / 2,
+            y: (containerSize.height - side) / 2,
+            width: side,
+            height: side
         )
-        isDetecting = false
     }
 
     private func acceptCrop() {
@@ -89,10 +85,10 @@ struct CropReviewView: View {
         onAccept(cropped.circularCropped)
     }
 
-    // MARK: - Coordinate Conversion
+    // MARK: - Coordinate conversion
 
     private func imageRectToViewRect(_ imageRect: CGRect, containerSize: CGSize) -> CGRect {
-        let scale = min(containerSize.width / image.size.width,
+        let scale = min(containerSize.width  / image.size.width,
                         containerSize.height / image.size.height)
         let scaledW = image.size.width  * scale
         let scaledH = image.size.height * scale
@@ -107,7 +103,7 @@ struct CropReviewView: View {
     }
 
     private func viewRectToImageRect(_ viewRect: CGRect) -> CGRect {
-        let scale = min(viewSize.width / image.size.width,
+        let scale = min(viewSize.width  / image.size.width,
                         viewSize.height / image.size.height)
         let scaledW = image.size.width  * scale
         let scaledH = image.size.height * scale
