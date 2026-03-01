@@ -1,6 +1,5 @@
 import * as functions from "firebase-functions";
-import { auth as adminAuth, db } from "../../config/firebase";
-import Stripe from "stripe";
+import { db } from "../../config/firebase";
 import {
   createStripe,
   stripeSecretKey,

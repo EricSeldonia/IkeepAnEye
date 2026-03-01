@@ -11,5 +11,5 @@ export const stripePublishableKey = defineSecret("STRIPE_PUBLISHABLE_KEY");
  * Call this inside a function handler, not at module load time.
  */
 export function createStripe(secretKey: string): Stripe {
-  return new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
+  return new Stripe(secretKey, { apiVersion: "2023-10-16" });
 }

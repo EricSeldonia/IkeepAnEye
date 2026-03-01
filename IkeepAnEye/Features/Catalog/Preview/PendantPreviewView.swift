@@ -16,7 +16,7 @@ struct PendantPreviewView: View {
     private var compositeContent: some View {
         ZStack {
             // Layer 1: product necklace photo
-            if let url = URL(string: product.imageURLs.first ?? "") {
+            if let url = URL(string: product.mainImageURL ?? "") {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
@@ -27,17 +27,16 @@ struct PendantPreviewView: View {
                 }
             }
 
-            // Layer 2: iris circle at anchor position
+            // Layer 2: iris oval at anchor position (landscape 3:2)
             if let irisImage {
                 GeometryReader { geo in
+                    let w = geo.size.width  * product.pendantDiameterFraction
+                    let h = w * (2.0 / 3.0)
                     Image(uiImage: irisImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(
-                            width:  geo.size.width  * product.pendantDiameterFraction,
-                            height: geo.size.width  * product.pendantDiameterFraction
-                        )
-                        .clipShape(Circle())
+                        .frame(width: w, height: h)
+                        .clipShape(Ellipse())
                         .position(
                             x: geo.size.width  * product.pendantAnchorX,
                             y: geo.size.height * product.pendantAnchorY

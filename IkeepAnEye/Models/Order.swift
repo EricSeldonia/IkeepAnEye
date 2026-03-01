@@ -52,6 +52,8 @@ enum OrderStatus: String, Codable, CaseIterable {
     case inProduction = "in_production"
     case shipped
     case delivered
+    case cancelled
+    case refunded
 
     var displayName: String {
         switch self {
@@ -60,6 +62,8 @@ enum OrderStatus: String, Codable, CaseIterable {
         case .inProduction: return "In Production"
         case .shipped: return "Shipped"
         case .delivered: return "Delivered"
+        case .cancelled: return "Cancelled"
+        case .refunded: return "Refunded"
         }
     }
 }

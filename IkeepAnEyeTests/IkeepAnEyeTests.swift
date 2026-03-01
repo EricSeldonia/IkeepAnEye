@@ -56,7 +56,7 @@ final class IkeepAnEyeTests: XCTestCase {
             name: "Silver Iris Pendant",
             description: "Test",
             priceInCents: 14999,
-            imageURLs: [],
+            images: [],
             pendantAnchorX: 0.5,
             pendantAnchorY: 0.5,
             pendantDiameterFraction: 0.1,

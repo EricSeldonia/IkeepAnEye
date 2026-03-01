@@ -1,6 +1,8 @@
 import UIKit
 import FirebaseCore
 import FirebaseAuth
+import FirebaseFirestore
+import FirebaseStorage
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
@@ -8,6 +10,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
+
+        if ProcessInfo.processInfo.environment["USE_EMULATOR"] == "1" {
+            Auth.auth().useEmulator(withHost: "localhost", port: 9099)
+            let settings = FirestoreSettings()
+            settings.host = "localhost:8080"
+            settings.cacheSettings = MemoryCacheSettings()
+            settings.isSSLEnabled = false
+            Firestore.firestore().settings = settings
+            Storage.storage().useEmulator(withHost: "localhost", port: 9199)
+        }
         return true
     }
 

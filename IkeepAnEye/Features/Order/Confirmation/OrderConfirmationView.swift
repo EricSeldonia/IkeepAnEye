@@ -3,6 +3,7 @@ import SwiftUI
 struct OrderConfirmationView: View {
     let order: Order
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var cartStore: CartStore
 
     var body: some View {
         VStack(spacing: 28) {
@@ -49,12 +50,18 @@ struct OrderConfirmationView: View {
             Spacer()
 
             Button("Continue Shopping") {
-                // Pop to root — NavigationStack handles this via path reset
+                cartStore.clear()
                 dismiss()
             }
             .buttonStyle(PrimaryButtonStyle())
             .padding(.horizontal)
             .padding(.bottom, 32)
+        }
+        .onAppear {
+            let orderIds = [order.id].compactMap { $0 }
+            AnalyticsService.shared.track("payment_completed", payload: [
+                "orderIds": orderIds,
+            ])
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitle("Confirmed")

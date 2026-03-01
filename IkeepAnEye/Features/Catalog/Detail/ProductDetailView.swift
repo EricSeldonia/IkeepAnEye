@@ -21,8 +21,8 @@ struct ProductDetailView: View {
             VStack(alignment: .leading, spacing: 20) {
                 // Product image carousel
                 TabView(selection: $selectedImageIndex) {
-                    ForEach(Array(product.imageURLs.enumerated()), id: \.offset) { idx, url in
-                        WebImage(url: URL(string: url))
+                    ForEach(Array(product.images.enumerated()), id: \.offset) { idx, img in
+                        WebImage(url: URL(string: img.downloadURL))
                             .resizable()
                             .scaledToFill()
                             .clipped()
@@ -63,14 +63,14 @@ struct ProductDetailView: View {
                                 Button { selectedIrisPhoto = nil } label: {
                                     VStack(spacing: 4) {
                                         ZStack {
-                                            Circle()
+                                            Ellipse()
                                                 .fill(Color(.secondarySystemBackground))
-                                                .frame(width: 60, height: 60)
+                                                .frame(width: 80, height: 54)
                                             Image(systemName: "xmark")
                                                 .foregroundColor(.secondary)
                                         }
                                         .overlay(
-                                            Circle().stroke(
+                                            Ellipse().stroke(
                                                 selectedIrisPhoto == nil ? Color.accentColor : Color.clear,
                                                 lineWidth: 3
                                             )
@@ -102,9 +102,9 @@ struct ProductDetailView: View {
                                 Button { showIrisCapture = true } label: {
                                     VStack(spacing: 4) {
                                         ZStack {
-                                            Circle()
+                                            Ellipse()
                                                 .fill(Color(.secondarySystemBackground))
-                                                .frame(width: 60, height: 60)
+                                                .frame(width: 80, height: 54)
                                             Image(systemName: "camera.fill")
                                                 .foregroundColor(.accentColor)
                                         }
@@ -148,6 +148,12 @@ struct ProductDetailView: View {
         }
         .navigationTitle(product.name)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            AnalyticsService.shared.track("product_viewed", payload: [
+                "productId": product.id ?? "",
+                "productName": product.name,
+            ])
+        }
         .task { await viewModel.loadIrisPhotos() }
         .fullScreenCover(isPresented: $showIrisCapture) {
             CameraView(onCapture: { _ in
@@ -186,15 +192,15 @@ private struct IrisThumbnailView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Circle()
+                Ellipse()
                     .fill(Color(.secondarySystemBackground))
                     .overlay(ProgressView().scaleEffect(0.6))
             }
         }
-        .frame(width: 60, height: 60)
-        .clipShape(Circle())
+        .frame(width: 80, height: 54)
+        .clipShape(Ellipse())
         .overlay(
-            Circle().stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
+            Ellipse().stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
         )
         .task { await loadImage() }
     }

@@ -23,6 +23,15 @@ extension UIImage {
         }
     }
 
+    /// Returns an oval-masked version of the image, preserving the rect's own aspect ratio.
+    var ovalCropped: UIImage {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).addClip()
+            draw(at: .zero)
+        }
+    }
+
     /// Returns a circular-cropped version of the image (centered square, then masked).
     var circularCropped: UIImage {
         let minSide = min(size.width, size.height)

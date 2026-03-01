@@ -1,8 +1,14 @@
+export interface ProductImage {
+  storagePath: string;
+  downloadURL: string;
+  isMain: boolean;
+}
+
 export interface Product {
   name: string;
   description: string;
   priceInCents: number;
-  imageURLs: string[];
+  images: ProductImage[];
   pendantAnchorX: number;
   pendantAnchorY: number;
   pendantDiameterFraction: number;

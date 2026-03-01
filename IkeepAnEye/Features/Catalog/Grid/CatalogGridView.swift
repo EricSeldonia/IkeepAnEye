@@ -67,7 +67,10 @@ struct CatalogGridView: View {
                 CartView()
             }
         }
-        .onAppear { viewModel.onAppear() }
+        .onAppear {
+            viewModel.onAppear()
+            AnalyticsService.shared.track("catalog_viewed")
+        }
     }
 }
 
@@ -76,7 +79,7 @@ private struct ProductCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            WebImage(url: URL(string: product.imageURLs.first ?? ""))
+            WebImage(url: URL(string: product.mainImageURL ?? ""))
                 .resizable()
                 .placeholder {
                     Rectangle()

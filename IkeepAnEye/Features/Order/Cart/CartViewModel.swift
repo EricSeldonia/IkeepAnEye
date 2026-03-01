@@ -18,6 +18,9 @@ final class CartViewModel: ObservableObject {
 
     func placeOrders(items: [CartItem]) async {
         guard let shipping, !items.isEmpty else { return }
+        AnalyticsService.shared.track("checkout_started", payload: [
+            "orderCount": items.count,
+        ])
         isLoading = true
         defer { isLoading = false }
         do {

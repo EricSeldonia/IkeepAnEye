@@ -89,14 +89,21 @@ final class IrisDetectionService {
         default: throw DetectionError.noLandmarksDetected
         }
 
-        let points = chosenEye.normalizedPoints
-        guard !points.isEmpty else {
+        let eyePoints = chosenEye.normalizedPoints
+        guard !eyePoints.isEmpty else {
             throw DetectionError.noLandmarksDetected
         }
 
+        // Also collect eyebrow landmarks for the chosen eye
+        let browRegion: VNFaceLandmarkRegion2D? = (eyeEnum == .left) ? landmarks.leftEyebrow : landmarks.rightEyebrow
+        let browPoints = browRegion?.normalizedPoints ?? []
+
+        // Combine eye + eyebrow points for the bounding region
+        let combinedPoints = eyePoints + browPoints
+
         // Points are relative to the face bounding box — convert to full-image normalized space
         let faceBB = observation.boundingBox
-        let imagePoints: [CGPoint] = points.map { pt in
+        let imagePoints: [CGPoint] = combinedPoints.map { pt in
             CGPoint(
                 x: faceBB.origin.x + pt.x * faceBB.width,
                 y: faceBB.origin.y + pt.y * faceBB.height
@@ -112,10 +119,19 @@ final class IrisDetectionService {
 
         var visionRect = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
 
-        // Add 15% padding on each side to capture the full iris/limbal ring
-        let padX = visionRect.width  * 0.15
-        let padY = visionRect.height * 0.15
-        visionRect = visionRect.insetBy(dx: -padX, dy: -padY)
+        // Directional padding: wider horizontally, more below the eye for cheek skin,
+        // less on top since the eyebrow is already included.
+        // If eyebrow landmarks were unavailable, add extra top padding to estimate brow position.
+        let padX      = visionRect.width  * 0.20
+        let padTop    = browPoints.isEmpty ? visionRect.height * 0.60 : visionRect.height * 0.15
+        let padBottom = visionRect.height * 0.35
+
+        visionRect = CGRect(
+            x:      visionRect.minX - padX,
+            y:      visionRect.minY - padBottom, // Vision y grows upward; subtract to expand downward in UIKit
+            width:  visionRect.width  + padX * 2,
+            height: visionRect.height + padTop + padBottom
+        )
         visionRect = visionRect.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
 
         // Convert Vision space (bottom-left origin, normalized) → UIKit pixel space

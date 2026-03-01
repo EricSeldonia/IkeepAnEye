@@ -72,6 +72,13 @@ struct CheckoutView: View {
         .onChange(of: viewModel.paymentSucceeded) { success in
             if success { showConfirmation = true }
         }
+        .onChange(of: viewModel.paymentFailed) { failed in
+            if failed {
+                // Reload a fresh PaymentSheet so the user can retry
+                viewModel.paymentFailed = false
+                Task { await viewModel.loadPaymentSheet() }
+            }
+        }
     }
 }
 
@@ -81,6 +88,7 @@ final class CheckoutViewModel: ObservableObject {
 
     @Published var paymentSheet: PaymentSheet?
     @Published var paymentSucceeded = false
+    @Published var paymentFailed = false
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -92,6 +100,7 @@ final class CheckoutViewModel: ObservableObject {
 
     func loadPaymentSheet() async {
         guard let orderId = order.id else { return }
+        paymentSheet = nil
         isLoading = true
         defer { isLoading = false }
         do {
@@ -107,6 +116,7 @@ final class CheckoutViewModel: ObservableObject {
             paymentSucceeded = true
         case .failed(let error):
             errorMessage = error.localizedDescription
+            paymentFailed = true
         case .canceled:
             break
         }

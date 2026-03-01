@@ -30,6 +30,9 @@ struct OrderHistoryListView: View {
                 .listStyle(.insetGrouped)
             }
         }
+        .onAppear {
+            AnalyticsService.shared.track("order_history_viewed")
+        }
         .navigationTitle("Orders")
         .task { await viewModel.load() }
         .errorAlert(message: $viewModel.errorMessage)

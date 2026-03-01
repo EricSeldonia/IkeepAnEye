@@ -27,7 +27,7 @@ struct CropReviewView: View {
                     }
 
                     if isDetecting {
-                        ProgressView("Detecting iris…")
+                        ProgressView("Detecting eye…")
                             .padding(16)
                             .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
                     }
@@ -70,19 +70,21 @@ struct CropReviewView: View {
     // MARK: - Crop helpers
 
     private func setDefaultCrop(in containerSize: CGSize) {
-        let side = min(containerSize.width, containerSize.height) * 0.4
+        let width  = min(containerSize.width, containerSize.height) * 0.7
+        let height = width * (2.0 / 3.0)
         cropRect = CGRect(
-            x: (containerSize.width  - side) / 2,
-            y: (containerSize.height - side) / 2,
-            width: side,
-            height: side
+            x: (containerSize.width  - width)  / 2,
+            y: (containerSize.height - height) / 2,
+            width: width,
+            height: height
         )
     }
 
     private func acceptCrop() {
         let imageRect = viewRectToImageRect(cropRect)
         guard let cropped = image.cropped(to: imageRect) else { return }
-        onAccept(cropped.circularCropped)
+        AnalyticsService.shared.track("iris_capture_completed")
+        onAccept(cropped.ovalCropped)
     }
 
     // MARK: - Coordinate conversion

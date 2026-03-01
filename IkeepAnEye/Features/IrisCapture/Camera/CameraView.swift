@@ -86,9 +86,9 @@ struct CameraView: View {
 
                     Ellipse()
                         .strokeBorder(Color.white.opacity(0.7), lineWidth: 2)
-                        .frame(width: 220, height: 160)
+                        .frame(width: 300, height: 180)
 
-                    Text("Position your eye inside the oval")
+                    Text("Frame your eye and eyebrow inside the oval")
                         .font(.caption)
                         .foregroundColor(.white)
                         .shadow(radius: 2)
@@ -144,6 +144,9 @@ struct CameraView: View {
             }
         }
         .loadingOverlay(isCapturing)
+        .onAppear {
+            AnalyticsService.shared.track("iris_capture_started")
+        }
         .task {
             if !cameraUnavailable {
                 await sessionManager.checkPermissionAndConfigure()

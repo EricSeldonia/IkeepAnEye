@@ -17,20 +17,33 @@ service cloud.firestore {
              request.resource.data[field] == resource.data[field];
     }
 
+    function isAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ─── Admins ───────────────────────────────────────────────────────────────
+
+    match /admins/{uid} {
+      // Admins can read their own record; bootstrap script uses Admin SDK
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if false; // Admin SDK only
+    }
+
     // ─── Products (public catalog) ───────────────────────────────────────────
 
     match /products/{productId} {
       // Anyone (including unauthenticated) can read active products
-      allow read: if resource.data.isActive == true;
-      // No client writes — managed via Firebase Admin / console
-      allow write: if false;
+      allow read: if resource.data.isActive == true || isAdmin();
+      // Admin web app can manage products
+      allow write: if isAdmin();
     }
 
     // ─── Users ───────────────────────────────────────────────────────────────
 
     match /users/{uid} {
-      // Users can only read their own document
-      allow read: if isOwner(uid);
+      // Users can only read their own document; admins can read all
+      allow read: if isOwner(uid) || isAdmin();
 
       // Client can only update safe profile fields
       // stripeCustomerId is CF-only (blocked here)
@@ -49,8 +62,8 @@ service cloud.firestore {
 
       // ─── Iris Photos subcollection ─────────────────────────────────────────
       match /irisPhotos/{photoId} {
-        // Users can read their own iris photos
-        allow read: if isOwner(uid);
+        // Users can read their own iris photos; admins can read any
+        allow read: if isOwner(uid) || isAdmin();
 
         // Client can create (upload after user confirmation)
         allow create: if isOwner(uid)
@@ -64,12 +77,22 @@ service cloud.firestore {
       }
     }
 
+    // ─── User Events (analytics) ─────────────────────────────────────────────
+
+    match /userEvents/{eventId} {
+      // Users can only write their own events
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'type', 'timestamp', 'sessionId']);
+      allow read, update, delete: if isAdmin();
+    }
+
     // ─── Orders ──────────────────────────────────────────────────────────────
 
     match /orders/{orderId} {
-      // Users can only read their own orders
-      allow read: if isSignedIn()
-        && resource.data.userId == request.auth.uid;
+      // Users can only read their own orders; admins can read all
+      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid)
+                  || isAdmin();
 
       // Client can create an order if:
       //   - userId matches their own UID
@@ -80,13 +103,14 @@ service cloud.firestore {
         && request.resource.data.status == 'pending_payment'
         && !('payment' in request.resource.data)
         && request.resource.data.keys().hasAll([
-             'userId', 'status', 'irisPhotoId', 'irisPhotoStoragePath',
+             'userId', 'status',
              'productId', 'productSnapshot', 'shipping', 'pricing',
              'createdAt', 'updatedAt'
            ]);
 
-      // Client can only update shipping address on pending orders
-      allow update: if isSignedIn()
+      // Client can only update shipping address on pending orders;
+      // admins can update status and fulfillment fields
+      allow update: if (isSignedIn()
         && resource.data.userId == request.auth.uid
         && resource.data.status == 'pending_payment'
         && request.resource.data.diff(resource.data).affectedKeys()
@@ -94,7 +118,8 @@ service cloud.firestore {
         // Never allow client to change payment or status
         && isNotChanging('payment')
         && isNotChanging('status')
-        && isNotChanging('userId');
+        && isNotChanging('userId'))
+        || isAdmin();
 
       allow delete: if false;
     }

@@ -4,6 +4,7 @@ struct CartView: View {
     @EnvironmentObject private var cartStore: CartStore
     @StateObject private var viewModel = CartViewModel()
     @State private var showAddressSheet = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         List {
@@ -43,7 +44,17 @@ struct CartView: View {
                 PricingRow(label: "Total", cents: viewModel.total(items: cartStore.items), bold: true)
             }
         }
+        .onAppear {
+            AnalyticsService.shared.track("cart_viewed", payload: [
+                "itemCount": cartStore.itemCount,
+            ])
+        }
         .navigationTitle("Cart")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Close") { dismiss() }
+            }
+        }
         .navigationDestination(isPresented: Binding(
             get: { viewModel.createdOrder != nil },
             set: { if !$0 { viewModel.createdOrder = nil } }
@@ -74,7 +85,7 @@ private struct CartItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: URL(string: item.product.imageURLs.first ?? "")) { phase in
+            AsyncImage(url: URL(string: item.product.mainImageURL ?? "")) { phase in
                 if case .success(let img) = phase { img.resizable().scaledToFill() }
                 else { Color(.secondarySystemBackground) }
             }

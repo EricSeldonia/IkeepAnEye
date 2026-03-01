@@ -20,13 +20,18 @@ service firebase.storage {
       return request.resource.size <= 10 * 1024 * 1024;
     }
 
+    function isAdmin() {
+      return request.auth != null &&
+             firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
     // ─── Iris Photos ─────────────────────────────────────────────────────────
     // Path: users/{uid}/iris/{photoId}/original.jpg
     //       users/{uid}/iris/{photoId}/cropped.jpg
 
     match /users/{uid}/iris/{allPaths=**} {
-      // Only the owning user can read their iris photos
-      allow read: if isOwner(uid);
+      // The owning user or an admin can read iris photos
+      allow read: if isOwner(uid) || isAdmin();
 
       // Client can write (upload) — but only images under 10MB
       // Path ownership is enforced by the uid segment
@@ -42,8 +47,9 @@ service firebase.storage {
     // Path: products/{productId}/...
 
     match /products/{allPaths=**} {
-      allow read: if true;   // Public CDN — no auth required
-      allow write: if false; // Admin SDK only
+      allow read: if true;          // Public CDN — no auth required
+      allow write: if isAdmin();    // Admin web app uploads product images
+      allow delete: if isAdmin();
     }
 
     // ─── Order Preview Composites ─────────────────────────────────────────────

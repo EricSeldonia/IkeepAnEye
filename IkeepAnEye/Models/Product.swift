@@ -1,12 +1,22 @@
 import Foundation
 import FirebaseFirestore
 
+struct ProductImage: Codable, Hashable {
+    var storagePath: String
+    var downloadURL: String
+    var isMain: Bool
+}
+
 struct Product: Codable, Identifiable {
     @DocumentID var id: String?
     var name: String
     var description: String
     var priceInCents: Int
-    var imageURLs: [String]
+    var images: [ProductImage]
+
+    var mainImageURL: String? {
+        images.first(where: { $0.isMain })?.downloadURL ?? images.first?.downloadURL
+    }
     // Normalized (0–1) anchor position for pendant on the necklace photo
     var pendantAnchorX: Double
     var pendantAnchorY: Double

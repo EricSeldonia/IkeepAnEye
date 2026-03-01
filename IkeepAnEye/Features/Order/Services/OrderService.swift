@@ -37,7 +37,7 @@ final class OrderService: ObservableObject {
             productSnapshot: .init(
                 name: product.name,
                 priceInCents: product.priceInCents,
-                imageURL: product.imageURLs.first ?? ""
+                imageURL: product.mainImageURL ?? ""
             ),
             previewCompositeStoragePath: previewStoragePath,
             shipping: shipping,

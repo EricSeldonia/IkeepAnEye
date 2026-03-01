@@ -1,7 +1,6 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
-import FirebaseStorage
 
 struct ManageIrisPhotosView: View {
     @StateObject private var viewModel = ManageIrisPhotosViewModel()
@@ -67,7 +66,7 @@ final class ManageIrisPhotosViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let db = Firestore.firestore()
-    private let storage = Storage.storage()
+    private let functionsClient = FunctionsClient()
 
     func load() async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -87,16 +86,17 @@ final class ManageIrisPhotosViewModel: ObservableObject {
     }
 
     func delete(at indexSet: IndexSet) async {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
+        struct Request: Encodable { let photoId: String }
+        struct Response: Decodable { let success: Bool }
+
         for index in indexSet {
             let photo = photos[index]
             guard let photoId = photo.id else { continue }
-            // Cloud Function (deleteIrisPhoto) handles Storage deletion and Firestore cleanup
             do {
-                try await db
-                    .collection("users").document(uid)
-                    .collection("irisPhotos").document(photoId)
-                    .updateData(["isActive": false])
+                let _: Response = try await functionsClient.call(
+                    name: "deleteIrisPhoto",
+                    data: Request(photoId: photoId)
+                )
                 photos.remove(at: index)
             } catch {
                 errorMessage = error.localizedDescription

@@ -14,6 +14,7 @@ export { handleStripeWebhook }  from "./functions/payments/handleStripeWebhook";
 // Order triggers
 export { onOrderCreated }       from "./functions/orders/onOrderCreated";
 export { onOrderStatusChanged } from "./functions/orders/onOrderStatusChanged";
+export { refundOrder }          from "./functions/orders/refundOrder";
 
 // Photo management
 export { deleteIrisPhoto } from "./functions/photos/deleteIrisPhoto";
