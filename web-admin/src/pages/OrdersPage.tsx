@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrders } from "../hooks/useOrders";
 import OrderStatusBadge from "../components/OrderStatusBadge";
+import IrisThumb from "../components/IrisThumb";
 import { OrderStatus } from "../types";
 
 const TABS: { label: string; value: OrderStatus | "all" }[] = [
@@ -75,6 +76,7 @@ export default function OrdersPage() {
               <th className="px-6 py-3">Order ID</th>
               <th className="px-6 py-3">Customer</th>
               <th className="px-6 py-3">Product</th>
+              <th className="px-6 py-3">Iris</th>
               <th className="px-6 py-3">Total</th>
               <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3">Date</th>
@@ -95,7 +97,21 @@ export default function OrdersPage() {
                   {order.shipping?.name ?? "—"}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-700">
-                  {order.productSnapshot?.name ?? "—"}
+                  <div className="flex items-center gap-2">
+                    {order.productSnapshot?.imageURL && (
+                      <img
+                        src={order.productSnapshot.imageURL}
+                        alt=""
+                        className="w-10 h-10 rounded object-cover flex-shrink-0 ring-1 ring-gray-200"
+                      />
+                    )}
+                    {order.productSnapshot?.name ?? "—"}
+                  </div>
+                </td>
+                <td className="px-6 py-3">
+                  {order.irisPhotoStoragePath
+                    ? <IrisThumb storagePath={order.irisPhotoStoragePath} />
+                    : <span className="text-sm text-gray-400">—</span>}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-700">
                   {fmt(order.pricing?.totalCents ?? 0)}
@@ -111,7 +127,7 @@ export default function OrdersPage() {
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-6 py-8 text-center text-sm text-gray-400"
                 >
                   No orders found.

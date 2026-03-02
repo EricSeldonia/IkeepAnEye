@@ -1,8 +1,11 @@
 import SwiftUI
+import FirebaseStorage
+import SDWebImageSwiftUI
 
 struct OrderDetailView: View {
     let orderId: String
     @StateObject private var viewModel: OrderDetailViewModel
+    @State private var showCheckout = false
 
     init(orderId: String) {
         self.orderId = orderId
@@ -11,45 +14,78 @@ struct OrderDetailView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading {
+            if viewModel.isLoading && viewModel.order == nil {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let order = viewModel.order {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        // Status
-                        HStack {
-                            Text("Status")
+
+                        // Product thumbnail + name + price
+                        HStack(spacing: 12) {
+                            WebImage(url: URL(string: order.productSnapshot.imageURL))
+                                .resizable()
+                                .placeholder { Color(.systemGray5) }
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(order.productSnapshot.name)
+                                    .font(.headline)
+                                Text(String(format: "$%.2f", Double(order.productSnapshot.priceInCents) / 100))
+                                    .foregroundColor(.secondary)
+                            }
                             Spacer()
-                            StatusBadge(status: order.status)
                         }
                         .padding()
                         .cardStyle()
 
-                        // Product
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Product").font(.caption).foregroundColor(.secondary)
-                            Text(order.productSnapshot.name).font(.headline)
-                            Text(String(format: "$%.2f", Double(order.productSnapshot.priceInCents) / 100))
-                                .foregroundColor(.secondary)
+                        // Iris photo (if personalised)
+                        if let irisPath = order.irisPhotoStoragePath {
+                            IrisPhotoSection(storagePath: irisPath)
+                                .padding()
+                                .cardStyle()
+                        }
+
+                        // Order ID · Date · Status
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Order ID").font(.caption).foregroundColor(.secondary)
+                                Spacer()
+                                Text(order.id.map { String($0.prefix(8)) + "…" } ?? "—")
+                                    .font(.subheadline.monospaced())
+                            }
+                            HStack {
+                                Text("Date").font(.caption).foregroundColor(.secondary)
+                                Spacer()
+                                Text(order.createdAt.dateValue()
+                                    .formatted(date: .abbreviated, time: .shortened))
+                                    .font(.subheadline)
+                            }
+                            HStack {
+                                Text("Status").font(.caption).foregroundColor(.secondary)
+                                Spacer()
+                                StatusBadge(status: order.status)
+                            }
                         }
                         .padding()
                         .cardStyle()
 
-                        // Pricing
+                        // Pricing breakdown
                         VStack(spacing: 8) {
                             PricingLine(label: "Subtotal", cents: order.pricing.subtotalCents)
                             PricingLine(label: "Shipping", cents: order.pricing.shippingCents)
-                            PricingLine(label: "Tax", cents: order.pricing.taxCents)
+                            PricingLine(label: "Tax",      cents: order.pricing.taxCents)
                             Divider()
-                            PricingLine(label: "Total", cents: order.pricing.totalCents, bold: true)
+                            PricingLine(label: "Total",    cents: order.pricing.totalCents, bold: true)
                         }
                         .padding()
                         .cardStyle()
 
-                        // Shipping
+                        // Shipping address
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Shipping to").font(.caption).foregroundColor(.secondary)
+                            Text("Ship to").font(.caption).foregroundColor(.secondary)
                             Text(order.shipping.formatted).font(.subheadline)
                         }
                         .padding()
@@ -67,17 +103,87 @@ struct OrderDetailView: View {
                             .padding()
                             .cardStyle()
                         }
+
+                        // Retry payment (pending_payment orders only)
+                        if order.status == .pendingPayment {
+                            Button {
+                                showCheckout = true
+                            } label: {
+                                Label("Complete Payment", systemImage: "creditcard.fill")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.accentColor)
+                                    .cornerRadius(12)
+                            }
+                        }
                     }
                     .padding()
+                }
+                .navigationDestination(isPresented: $showCheckout) {
+                    CheckoutView(order: order)
                 }
             }
         }
         .navigationTitle("Order Details")
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.load() }
+        .onAppear {
+            // Reload when returning from CheckoutView (e.g. after payment retry)
+            guard viewModel.order != nil else { return }
+            Task { await viewModel.load() }
+        }
         .errorAlert(message: $viewModel.errorMessage)
     }
 }
+
+// MARK: - Iris photo card
+
+private struct IrisPhotoSection: View {
+    let storagePath: String
+    @State private var url: URL?
+    @State private var failed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Iris Photo").font(.caption).foregroundColor(.secondary)
+
+            Group {
+                if let url {
+                    WebImage(url: url)
+                        .resizable()
+                        .placeholder { Color(.systemGray5) }
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else if failed {
+                    Text("Photo unavailable")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 60)
+                } else {
+                    Color(.systemGray5)
+                        .frame(height: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(ProgressView())
+                }
+            }
+        }
+        .task {
+            do {
+                url = try await Storage.storage()
+                    .reference(withPath: storagePath)
+                    .downloadURL()
+            } catch {
+                failed = true
+            }
+        }
+    }
+}
+
+// MARK: - View model
 
 @MainActor
 final class OrderDetailViewModel: ObservableObject {
@@ -98,6 +204,8 @@ final class OrderDetailViewModel: ObservableObject {
         }
     }
 }
+
+// MARK: - Helpers
 
 private struct PricingLine: View {
     let label: String
