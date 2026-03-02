@@ -48,8 +48,8 @@ targets:
         UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-        NSCameraUsageDescription: "IkeepAnEye needs camera access to photograph your eye for creating personalized iris jewelry."
-        NSPhotoLibraryUsageDescription: "IkeepAnEye can save and load iris photos from your photo library."
+        NSCameraUsageDescription: "IkeepAnEye needs camera access to photograph your eye for a personalized pendant."
+        NSPhotoLibraryUsageDescription: "IkeepAnEye can save and load eye photos from your photo library."
         NSPhotoLibraryAddUsageDescription: "IkeepAnEye saves your pendant preview to your photo library."
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

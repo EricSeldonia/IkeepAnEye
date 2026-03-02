@@ -60,9 +60,9 @@ service cloud.firestore {
       allow create: if false;
       allow delete: if false;
 
-      // ─── Iris Photos subcollection ─────────────────────────────────────────
-      match /irisPhotos/{photoId} {
-        // Users can read their own iris photos; admins can read any
+      // ─── Eye Photos subcollection ─────────────────────────────────────────
+      match /eyePhotos/{photoId} {
+        // Users can read their own eye photos; admins can read any
         allow read: if isOwner(uid) || isAdmin();
 
         // Client can create (upload after user confirmation)
@@ -71,7 +71,7 @@ service cloud.firestore {
           && request.resource.data.isActive == true;
 
         // Updates and deletes are Cloud Function only
-        // (deleteIrisPhoto CF handles cleanup)
+        // (deleteEyePhoto CF handles cleanup)
         allow update: if false;
         allow delete: if false;
       }

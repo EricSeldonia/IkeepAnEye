@@ -3,22 +3,22 @@ import { db, storage } from "../../config/firebase";
 
 /**
  * GDPR deletion trigger: when a Firebase Auth user is deleted,
- * purge all iris photos from Storage and anonymize their orders.
+ * purge all eye photos from Storage and anonymize their orders.
  */
 export const deleteUserData = functions.auth.user().onDelete(async (user) => {
   const uid = user.uid;
   const bucket = storage.bucket();
 
-  // 1. Delete all iris photo files from Storage
+  // 1. Delete all eye photo files from Storage
   try {
-    await bucket.deleteFiles({ prefix: `users/${uid}/iris/` });
+    await bucket.deleteFiles({ prefix: `users/${uid}/eye/` });
     console.log(`Deleted Storage files for user ${uid}`);
   } catch (err) {
     console.error("Error deleting Storage files:", err);
   }
 
-  // 2. Delete all irisPhotos subcollection documents
-  const photosRef = db.collection("users").doc(uid).collection("irisPhotos");
+  // 2. Delete all eyePhotos subcollection documents
+  const photosRef = db.collection("users").doc(uid).collection("eyePhotos");
   const photoSnap = await photosRef.get();
   const photoDeletes = photoSnap.docs.map((d) => d.ref.delete());
   await Promise.all(photoDeletes);
@@ -31,7 +31,7 @@ export const deleteUserData = functions.auth.user().onDelete(async (user) => {
   const orderUpdates = ordersSnap.docs.map((d) =>
     d.ref.update({
       userId: "DELETED",
-      irisPhotoStoragePath: null,
+      eyePhotoStoragePath: null,
       previewCompositeStoragePath: null,
     })
   );

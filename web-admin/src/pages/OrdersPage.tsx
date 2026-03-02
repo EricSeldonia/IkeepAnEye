@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrders } from "../hooks/useOrders";
 import OrderStatusBadge from "../components/OrderStatusBadge";
-import IrisThumb from "../components/IrisThumb";
+import EyeThumb from "../components/EyeThumb";
 import { OrderStatus } from "../types";
 
 const TABS: { label: string; value: OrderStatus | "all" }[] = [
@@ -76,7 +76,7 @@ export default function OrdersPage() {
               <th className="px-6 py-3">Order ID</th>
               <th className="px-6 py-3">Customer</th>
               <th className="px-6 py-3">Product</th>
-              <th className="px-6 py-3">Iris</th>
+              <th className="px-6 py-3">Eye</th>
               <th className="px-6 py-3">Total</th>
               <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3">Date</th>
@@ -109,8 +109,8 @@ export default function OrdersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-3">
-                  {order.irisPhotoStoragePath
-                    ? <IrisThumb storagePath={order.irisPhotoStoragePath} />
+                  {order.eyePhotoStoragePath
+                    ? <EyeThumb storagePath={order.eyePhotoStoragePath} />
                     : <span className="text-sm text-gray-400">—</span>}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-700">

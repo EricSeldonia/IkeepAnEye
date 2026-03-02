@@ -21,9 +21,9 @@
 
 ## 1. Product Overview
 
-IkeepAnEye is an iOS e-commerce app for ordering custom iris-engraved pendants. A user photographs their eye, selects a pendant design from a catalog, and places an order. The pendant is then crafted and shipped.
+IkeepAnEye is an iOS e-commerce app for ordering custom eye pendants. A user photographs their eye, selects a pendant design from a catalog, and places an order. The pendant is then crafted and shipped.
 
-**Key concept**: The iris photo is purely personal — it is captured on-device by Apple's Vision framework, never leaves the phone until the user explicitly taps "Use Photo", and is stored in a private Firebase Storage path accessible only to that user and admins.
+**Key concept**: The eye photo is purely personal — it is captured on-device by Apple's Vision framework, never leaves the phone until the user explicitly taps "Use Photo", and is stored in a private Firebase Storage path accessible only to that user and admins.
 
 ---
 
@@ -36,7 +36,7 @@ IkeepAnEye is an iOS e-commerce app for ordering custom iris-engraved pendants. 
 │  ┌──────────┐  ┌──────────┐  ┌───────────┐  ┌──────────┐  │
 │  │ Catalog  │  │  Cart    │  │  Checkout │  │  Profile │  │
 │  │ Grid/    │  │ CartStore│  │ Stripe    │  │ Orders / │  │
-│  │ Detail   │  │ (global) │  │ PaySheet  │  │ IrisPhot.│  │
+│  │ Detail   │  │ (global) │  │ PaySheet  │  │ EyePhot.│  │
 │  └────┬─────┘  └────┬─────┘  └─────┬─────┘  └────┬─────┘  │
 │       │             │              │              │         │
 └───────┼─────────────┼──────────────┼──────────────┼─────────┘
@@ -46,12 +46,12 @@ IkeepAnEye is an iOS e-commerce app for ordering custom iris-engraved pendants. 
 │  Firebase (Auth / Firestore / Storage / Functions)          │
 │                                                             │
 │  Collections:                                               │
-│    products   users/{uid}   users/{uid}/irisPhotos          │
+│    products   users/{uid}   users/{uid}/eyePhotos          │
 │    orders     admins        userEvents                       │
 │                                                             │
 │  Storage buckets:                                           │
-│    users/{uid}/iris/{photoId}/original.jpg                  │
-│    users/{uid}/iris/{photoId}/cropped.jpg                   │
+│    users/{uid}/eye/{photoId}/original.jpg                  │
+│    users/{uid}/eye/{photoId}/cropped.jpg                   │
 │    products/{productId}/images/{filename}                   │
 │    orders/{orderId}/preview.jpg                             │
 └───────────────────────┬─────────────────────────────────────┘
@@ -69,12 +69,12 @@ IkeepAnEye is an iOS e-commerce app for ordering custom iris-engraved pendants. 
 | From | To | How | When |
 |---|---|---|---|
 | iOS App | Firestore | Firebase SDK (real-time) | Product catalog, order creation, order history |
-| iOS App | Firebase Storage | Firebase SDK | Iris photo upload/download |
-| iOS App | Cloud Functions | Firebase Callable Functions | createPaymentIntent, deleteIrisPhoto |
+| iOS App | Firebase Storage | Firebase SDK | Eye photo upload/download |
+| iOS App | Cloud Functions | Firebase Callable Functions | createPaymentIntent, deleteEyePhoto |
 | iOS App | Stripe | StripePaymentSheet SDK | Payment UI, card collection |
 | Stripe | Cloud Functions | HTTP webhook | Payment success/failure confirmation |
 | Web Admin | Firestore | Firebase SDK (real-time) | Read/update orders, products, users |
-| Web Admin | Firebase Storage | Firebase SDK | Iris photo viewing, product image upload |
+| Web Admin | Firebase Storage | Firebase SDK | Eye photo viewing, product image upload |
 | Web Admin | Cloud Functions | Firebase Callable Functions | refundOrder |
 | Cloud Functions | Stripe | Stripe Node SDK | Create payment intent, issue refunds |
 | Cloud Functions | Firestore | Firebase Admin SDK | Update order status, user records |
@@ -94,7 +94,7 @@ IkeepAnEye/
 │   ├── Models/
 │   │   ├── Product.swift          # Product + ProductImage structs
 │   │   ├── Order.swift            # Order + nested types
-│   │   └── IrisPhoto.swift        # Iris photo document model
+│   │   └── EyePhoto.swift        # Eye photo document model
 │   ├── Services/
 │   │   └── AnalyticsService.swift # User event tracking
 │   ├── Core/
@@ -104,10 +104,10 @@ IkeepAnEye/
 │   └── Features/
 │       ├── Auth/                  # Login / register views
 │       ├── Catalog/               # Product grid + detail + pendant preview
-│       ├── IrisCapture/           # Camera + crop/review flow
+│       ├── EyeCapture/           # Camera + crop/review flow
 │       ├── Order/                 # Cart, checkout, confirmation
 │       ├── OrderHistory/          # Order list + detail view
-│       └── Profile/               # Iris photo management
+│       └── Profile/               # Eye photo management
 │
 ├── functions/                     # Firebase Cloud Functions (TypeScript)
 │   ├── src/
@@ -119,7 +119,7 @@ IkeepAnEye/
 │   │   │   ├── auth/              # createUserRecord, deleteUserData
 │   │   │   ├── payments/          # createPaymentIntent, handleStripeWebhook
 │   │   │   ├── orders/            # onOrderCreated, onOrderStatusChanged, refundOrder
-│   │   │   └── photos/            # deleteIrisPhoto
+│   │   │   └── photos/            # deleteEyePhoto
 │   │   ├── services/
 │   │   │   └── emailService.ts    # Stub — needs SendGrid/Resend
 │   │   ├── types/                 # Shared TypeScript interfaces
@@ -295,7 +295,7 @@ Then open `localhost:4000` in a browser to see the Emulator UI — you can brows
 |---|---|---|
 | `products` | Pendant catalog | Admin web panel |
 | `users/{uid}` | User profile + default shipping | App (safe fields only) + CF (stripeCustomerId) |
-| `users/{uid}/irisPhotos` | Iris photo metadata | iOS app (on confirm) |
+| `users/{uid}/eyePhotos` | Eye photo metadata | iOS app (on confirm) |
 | `orders` | All orders | iOS app (create) + CF (payment/status) + Admin (status/fulfillment) |
 | `admins` | Admin user UIDs | Manual (Bootstrap script / Firebase Console) |
 | `userEvents` | Analytics funnel events | iOS app |
@@ -304,8 +304,8 @@ Then open `localhost:4000` in a browser to see the Emulator UI — you can brows
 
 | Path | Contents | Access |
 |---|---|---|
-| `users/{uid}/iris/{photoId}/original.jpg` | Full-resolution eye photo | Owner + Admin only |
-| `users/{uid}/iris/{photoId}/cropped.jpg` | Circular cropped iris | Owner + Admin only |
+| `users/{uid}/eye/{photoId}/original.jpg` | Full-resolution eye photo | Owner + Admin only |
+| `users/{uid}/eye/{photoId}/cropped.jpg` | Circular cropped eye | Owner + Admin only |
 | `products/{productId}/images/{filename}` | Product catalog images | Public read, Admin write |
 | `orders/{orderId}/preview.jpg` | Pendant composite preview | No direct access — signed URL via CF |
 
@@ -349,7 +349,7 @@ firebase deploy --only firestore:indexes
 |---|---|---|
 | `products` | Anyone (active only) or Admin (all) | Admin only |
 | `users/{uid}` | Owner or Admin | Owner (safe fields); CF-only for `stripeCustomerId` |
-| `users/{uid}/irisPhotos` | Owner or Admin | Owner (create only); CF-only for delete |
+| `users/{uid}/eyePhotos` | Owner or Admin | Owner (create only); CF-only for delete |
 | `orders` | Owner or Admin | Owner (create + shipping update); CF for payment/status; Admin for all |
 | `admins` | Owner or Admin | Never from client (Admin SDK only) |
 | `userEvents` | Admin only | Owner (create own events only) |
@@ -358,7 +358,7 @@ firebase deploy --only firestore:indexes
 
 | Path | Read | Write |
 |---|---|---|
-| `users/{uid}/iris/**` | Owner or Admin | Owner (images under 10MB) |
+| `users/{uid}/eye/**` | Owner or Admin | Owner (images under 10MB) |
 | `products/**` | Public | Admin only |
 | `orders/**` | No direct access | CF only (signed URLs served by CF) |
 
@@ -384,9 +384,9 @@ A user is considered an admin if a document exists at `/admins/{uid}` in Firesto
 #### `deleteUserData`
 **Trigger**: Firebase Auth `onDelete` (GDPR compliance)
 **What it does**:
-1. Deletes all iris Storage files under `users/{uid}/iris/`
-2. Deletes all `users/{uid}/irisPhotos` documents
-3. Anonymizes orders: sets `userId = "DELETED"`, clears iris and preview paths
+1. Deletes all eye Storage files under `users/{uid}/eye/`
+2. Deletes all `users/{uid}/eyePhotos` documents
+3. Anonymizes orders: sets `userId = "DELETED"`, clears eye and preview paths
 4. Deletes the `users/{uid}` document
 
 ### Callable Functions (called directly from clients)
@@ -401,12 +401,12 @@ A user is considered an admin if a document exists at `/admins/{uid}` in Firesto
 4. Creates Stripe ephemeral key for PaymentSheet
 5. Returns `clientSecret`, `ephemeralKey`, `customerId`, `publishableKey` to iOS
 
-#### `deleteIrisPhoto`
-**Called by**: iOS app (ManageIrisPhotosView)
+#### `deleteEyePhoto`
+**Called by**: iOS app (ManageEyePhotosView)
 **Auth required**: Yes — scoped to caller's own photos
 **What it does**:
 1. Deletes `original.jpg` and `cropped.jpg` from Storage
-2. Hard-deletes the Firestore document in `users/{uid}/irisPhotos/{photoId}`
+2. Hard-deletes the Firestore document in `users/{uid}/eyePhotos/{photoId}`
 
 #### `refundOrder`
 **Called by**: Web admin (OrderDetailPage)
@@ -460,7 +460,7 @@ App starts
             └── Signed in → MainTabView
                     ├── Tab 1: Shop (CatalogGridView)
                     ├── Tab 2: Orders (OrderHistoryListView)
-                    └── Tab 3: Profile (ProfileView + ManageIrisPhotosView)
+                    └── Tab 3: Profile (ProfileView + ManageEyePhotosView)
 ```
 
 ### Shopping flow
@@ -473,15 +473,15 @@ CatalogGridView
 ProductDetailView
   ├── Image carousel (all product.images, main image first)
   ├── Material, chain details, description
-  ├── Iris photo selector:
+  ├── Eye photo selector:
   │     ├── "None" — order without personalization
-  │     ├── Stored iris photos (loaded from irisPhotos subcollection)
+  │     ├── Stored eye photos (loaded from eyePhotos subcollection)
   │     └── "New" — opens camera full-screen
   ├── "Preview Pendant" → PendantPreviewView (if iris selected)
   └── "Add to Cart" → CartStore.add()
 ```
 
-### Iris capture flow
+### Eye capture flow
 
 ```
 CameraView (full-screen)
@@ -492,11 +492,11 @@ CameraView (full-screen)
         │
         ▼
 CropReviewView
-  ├── Apple Vision detects iris automatically
+  ├── Apple Vision detects eye automatically
   ├── User can drag/resize the crop rectangle
   ├── "Use Photo" → crops image + saves to Firebase Storage
-  │     ├── original.jpg → users/{uid}/iris/{photoId}/original.jpg
-  │     └── cropped.jpg  → users/{uid}/iris/{photoId}/cropped.jpg
+  │     ├── original.jpg → users/{uid}/eye/{photoId}/original.jpg
+  │     └── cropped.jpg  → users/{uid}/eye/{photoId}/cropped.jpg
   │         (circular mask applied)
   └── Photo is never uploaded until "Use Photo" is tapped
 ```
@@ -540,8 +540,8 @@ Every event writes to the `userEvents` Firestore collection with `userId`, `sess
 |---|---|---|
 | `catalog_viewed` | CatalogGridView appears | — |
 | `product_viewed` | ProductDetailView appears | productId, productName |
-| `iris_capture_started` | CameraView appears | — |
-| `iris_capture_completed` | "Use Photo" tapped | — |
+| `eye_capture_started` | CameraView appears | — |
+| `eye_capture_completed` | "Use Photo" tapped | — |
 | `cart_viewed` | CartView appears | itemCount |
 | `checkout_started` | placeOrders() called | orderCount |
 | `payment_completed` | OrderConfirmationView appears | orderIds |
@@ -587,7 +587,7 @@ The primary order management interface. See [Order Lifecycle](#10-order-lifecycl
 
 #### Customer Detail
 - User profile (email, display name, join date, order count)
-- Iris photo thumbnails (click to enlarge)
+- Eye photo thumbnails (click to enlarge)
 - Order history table (links to OrderDetailPage)
 - Activity timeline: all `userEvents` grouped by session, with human-readable labels
 
@@ -636,17 +636,17 @@ pending_payment
 ### Admin order processing steps
 
 1. **New order arrives**: Status is `pending_payment`. Wait for Stripe to confirm payment (status changes to `paid` automatically via webhook).
-2. **Order becomes `paid`**: Print the iris photo from the Customer Detail page (open iris photo → "Print"). Begin crafting the pendant.
+2. **Order becomes `paid`**: Print the eye photo from the Customer Detail page (open eye photo → "Print"). Begin crafting the pendant.
 3. **Pendant ready to ship**: Go to OrderDetailPage → "Mark In Production". Package the pendant.
 4. **Shipped**: Enter tracking number and carrier → "Mark Shipped". Customer receives shipping notification.
 5. **Confirmed delivered**: Click "Mark Delivered".
 6. **Issue or refund request**: Click "Refund & Cancel" (only available on `paid` or `in_production` orders). This immediately issues a full Stripe refund.
 
-### Accessing the iris photo for production
+### Accessing the eye photo for production
 
-From **OrderDetailPage**: If the order has an iris photo, a "View Iris Photo" button appears. Click it to open the full-resolution image with print and download options.
+From **OrderDetailPage**: If the order has an eye photo, a "View Eye Photo" button appears. Click it to open the full-resolution image with print and download options.
 
-From **CustomerDetailPage**: All of a customer's iris photos are shown as thumbnails. Click any to open the modal.
+From **CustomerDetailPage**: All of a customer's eye photos are shown as thumbnails. Click any to open the modal.
 
 ---
 
@@ -683,8 +683,8 @@ orders/{orderId}
 ├── productSnapshot: {            # immutable copy of product at time of purchase
 │     name, priceInCents, imageURL
 │   }
-├── irisPhotoId: string?          # null if no personalization
-├── irisPhotoStoragePath: string? # Storage path to cropped iris (null if no personalization)
+├── eyePhotoId: string?          # null if no personalization
+├── eyePhotoStoragePath: string? # Storage path to cropped eye (null if no personalization)
 ├── shipping: {
 │     fullName, line1, line2?, city, state, postalCode, country
 │   }
@@ -715,12 +715,12 @@ users/{uid}
 └── lastSignInAt: Timestamp
 ```
 
-### IrisPhoto
+### EyePhoto
 
 ```
-users/{uid}/irisPhotos/{photoId}
+users/{uid}/eyePhotos/{photoId}
 ├── originalStoragePath: string   # full-resolution eye photo
-├── croppedStoragePath: string    # circular cropped iris
+├── croppedStoragePath: string    # circular cropped eye
 ├── capturedAt: Timestamp
 ├── isActive: bool
 └── metadata: {

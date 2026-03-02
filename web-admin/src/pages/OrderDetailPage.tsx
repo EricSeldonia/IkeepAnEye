@@ -10,7 +10,7 @@ import { httpsCallable } from "firebase/functions";
 import { db, functions } from "../firebase";
 import { Order } from "../types";
 import OrderStatusBadge from "../components/OrderStatusBadge";
-import IrisPhotoModal from "../components/IrisPhotoModal";
+import EyePhotoModal from "../components/EyePhotoModal";
 
 function fmt(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -23,7 +23,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showIrisModal, setShowIrisModal] = useState(false);
+  const [showEyeModal, setShowEyeModal] = useState(false);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [carrier, setCarrier] = useState("");
@@ -112,7 +112,7 @@ export default function OrderDetailPage() {
   if (!order) return <p className="text-gray-500">Order not found.</p>;
 
   const canRefund = ["paid", "in_production"].includes(order.status);
-  const irisPath = order.irisPhotoStoragePath;
+  const eyePath = order.eyePhotoStoragePath;
 
   return (
     <div className="max-w-2xl">
@@ -184,12 +184,12 @@ export default function OrderDetailPage() {
             </p>
           </div>
         </div>
-        {irisPath && (
+        {eyePath && (
           <button
-            onClick={() => setShowIrisModal(true)}
+            onClick={() => setShowEyeModal(true)}
             className="mt-4 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
           >
-            View Iris Photo
+            View Eye Photo
           </button>
         )}
       </div>
@@ -341,10 +341,10 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {showIrisModal && irisPath && (
-        <IrisPhotoModal
-          storagePath={irisPath}
-          onClose={() => setShowIrisModal(false)}
+      {showEyeModal && eyePath && (
+        <EyePhotoModal
+          storagePath={eyePath}
+          onClose={() => setShowEyeModal(false)}
         />
       )}
     </div>

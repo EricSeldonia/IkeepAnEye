@@ -27,7 +27,7 @@ export const onOrderStatusChanged = functions.firestore
         await notificationService.sendPushNotification(
           after.userId,
           "Your pendant is being crafted!",
-          "We've started production on your iris pendant."
+          "We've started production on your pendant."
         );
         break;
 
@@ -44,7 +44,7 @@ export const onOrderStatusChanged = functions.firestore
         await notificationService.sendPushNotification(
           after.userId,
           "Your pendant has arrived!",
-          "We hope you love your iris pendant."
+          "We hope you love your pendant."
         );
         break;
     }

@@ -53,7 +53,7 @@ final class IkeepAnEyeTests: XCTestCase {
 
     func testProductFormattedPrice() {
         let product = Product(
-            name: "Silver Iris Pendant",
+            name: "Silver Eye Pendant",
             description: "Test",
             priceInCents: 14999,
             images: [],

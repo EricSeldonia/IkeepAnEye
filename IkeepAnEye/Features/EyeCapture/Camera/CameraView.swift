@@ -145,7 +145,7 @@ struct CameraView: View {
         }
         .loadingOverlay(isCapturing)
         .onAppear {
-            AnalyticsService.shared.track("iris_capture_started")
+            AnalyticsService.shared.track("eye_capture_started")
         }
         .task {
             if !cameraUnavailable {

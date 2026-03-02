@@ -1,9 +1,9 @@
 import UIKit
-import Vision
+@preconcurrency import Vision
 
-/// Runs on-device iris detection using Vision framework.
+/// Runs on-device eye detection using Vision framework.
 /// All processing happens on a background queue — never blocks the main thread.
-final class IrisDetectionService {
+final class EyeDetectionService {
 
     enum DetectionError: LocalizedError {
         case noFaceDetected
@@ -19,14 +19,14 @@ final class IrisDetectionService {
         }
     }
 
-    /// Detects the iris region in `image`, returning the highest-confidence result.
+    /// Detects the eye region in `image`, returning the highest-confidence result.
     /// Throws `DetectionError` if detection fails.
-    func detect(in image: UIImage) async throws -> IrisRegion {
+    func detect(in image: UIImage) async throws -> EyeRegion {
         guard let cgImage = image.cgImage else { throw DetectionError.imageConversionFailed }
 
         return try await withCheckedThrowingContinuation { continuation in
             var resumed = false
-            func resume(with result: Result<IrisRegion, Error>) {
+            func resume(with result: Result<EyeRegion, Error>) {
                 guard !resumed else { return }
                 resumed = true
                 switch result {
@@ -63,7 +63,7 @@ final class IrisDetectionService {
 
     // MARK: - Private
 
-    private func process(request: VNRequest, imageSize: CGSize) throws -> IrisRegion {
+    private func process(request: VNRequest, imageSize: CGSize) throws -> EyeRegion {
         guard let observations = request.results as? [VNFaceObservation],
               let observation = observations.max(by: { $0.confidence < $1.confidence })
         else { throw DetectionError.noFaceDetected }
@@ -75,7 +75,7 @@ final class IrisDetectionService {
         let rightEye = landmarks.rightEye
 
         let chosenEye: VNFaceLandmarkRegion2D
-        let eyeEnum: IrisRegion.Eye
+        let eyeEnum: EyeRegion.Eye
 
         switch (leftEye, rightEye) {
         case let (l?, r?):
@@ -137,7 +137,7 @@ final class IrisDetectionService {
         // Convert Vision space (bottom-left origin, normalized) → UIKit pixel space
         let uiRect = UIImage.visionRectToUIKit(visionRect, imageSize: imageSize)
 
-        return IrisRegion(
+        return EyeRegion(
             rect: uiRect,
             confidence: Double(observation.confidence),
             eye: eyeEnum

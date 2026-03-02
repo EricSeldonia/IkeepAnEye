@@ -2,8 +2,8 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
-struct ManageIrisPhotosView: View {
-    @StateObject private var viewModel = ManageIrisPhotosViewModel()
+struct ManageEyePhotosView: View {
+    @StateObject private var viewModel = ManageEyePhotosViewModel()
     @State private var showCapture = false
 
     var body: some View {
@@ -17,9 +17,9 @@ struct ManageIrisPhotosView: View {
                         Image(systemName: "eye.slash")
                             .font(.system(size: 48))
                             .foregroundColor(.secondary)
-                        Text("No Iris Photos")
+                        Text("No Eye Photos")
                             .font(.headline)
-                        Text("Capture your first iris photo to get started.")
+                        Text("Capture your first eye photo to get started.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -31,7 +31,7 @@ struct ManageIrisPhotosView: View {
             } else {
                 List {
                     ForEach(viewModel.photos) { photo in
-                        IrisPhotoRow(photo: photo)
+                        EyePhotoRow(photo: photo)
                     }
                     .onDelete { indexSet in
                         Task { await viewModel.delete(at: indexSet) }
@@ -40,7 +40,7 @@ struct ManageIrisPhotosView: View {
                 .listStyle(.insetGrouped)
             }
         }
-        .navigationTitle("Iris Photos")
+        .navigationTitle("Eye Photos")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showCapture = true } label: {
@@ -60,8 +60,8 @@ struct ManageIrisPhotosView: View {
 }
 
 @MainActor
-final class ManageIrisPhotosViewModel: ObservableObject {
-    @Published var photos: [IrisPhoto] = []
+final class ManageEyePhotosViewModel: ObservableObject {
+    @Published var photos: [EyePhoto] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -75,11 +75,11 @@ final class ManageIrisPhotosViewModel: ObservableObject {
         do {
             let snapshot = try await db
                 .collection("users").document(uid)
-                .collection("irisPhotos")
+                .collection("eyePhotos")
                 .whereField("isActive", isEqualTo: true)
                 .order(by: "capturedAt", descending: true)
                 .getDocuments()
-            photos = snapshot.documents.compactMap { try? $0.data(as: IrisPhoto.self) }
+            photos = snapshot.documents.compactMap { try? $0.data(as: EyePhoto.self) }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -94,7 +94,7 @@ final class ManageIrisPhotosViewModel: ObservableObject {
             guard let photoId = photo.id else { continue }
             do {
                 let _: Response = try await functionsClient.call(
-                    name: "deleteIrisPhoto",
+                    name: "deleteEyePhoto",
                     data: Request(photoId: photoId)
                 )
                 photos.remove(at: index)
@@ -105,8 +105,8 @@ final class ManageIrisPhotosViewModel: ObservableObject {
     }
 }
 
-private struct IrisPhotoRow: View {
-    let photo: IrisPhoto
+private struct EyePhotoRow: View {
+    let photo: EyePhoto
 
     var body: some View {
         HStack(spacing: 12) {
@@ -114,7 +114,7 @@ private struct IrisPhotoRow: View {
                 .font(.system(size: 36))
                 .foregroundColor(.accentColor)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Iris Photo")
+                Text("Eye Photo")
                     .font(.headline)
                 Text(photo.capturedAt.dateValue().formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)

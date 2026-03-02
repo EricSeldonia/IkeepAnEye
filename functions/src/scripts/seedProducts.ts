@@ -52,10 +52,10 @@ interface ProductSeed {
 
 const products: ProductSeed[] = [
   {
-    id: "classic-iris-pendant",
-    name: "Classic Iris Pendant",
+    id: "classic-eye-pendant",
+    name: "Classic Eye Pendant",
     description:
-      "A timeless sterling silver pendant that captures the unique pattern of your iris in exquisite detail. Each piece is one-of-a-kind, just like you.",
+      "A timeless sterling silver pendant that captures the unique pattern of your eye in exquisite detail. Each piece is one-of-a-kind, just like you.",
     priceInCents: 12999,
     images: [
       {
@@ -73,10 +73,10 @@ const products: ProductSeed[] = [
     sortOrder: 1,
   },
   {
-    id: "rose-gold-iris-locket",
-    name: "Rose Gold Iris Locket",
+    id: "rose-gold-eye-locket",
+    name: "Rose Gold Eye Locket",
     description:
-      "An elegant rose gold plated locket with your iris artfully set inside. Opens to reveal a small keepsake compartment — wear your world close to your heart.",
+      "An elegant rose gold plated locket with your eye artfully set inside. Opens to reveal a small keepsake compartment — wear your world close to your heart.",
     priceInCents: 15999,
     images: [
       {
@@ -94,10 +94,10 @@ const products: ProductSeed[] = [
     sortOrder: 2,
   },
   {
-    id: "minimalist-iris-disc",
-    name: "Minimalist Iris Disc",
+    id: "minimalist-eye-disc",
+    name: "Minimalist Eye Disc",
     description:
-      "Clean lines, modern aesthetic. This lightweight titanium disc lets your iris speak for itself with no embellishment — pure, personal, powerful.",
+      "Clean lines, modern aesthetic. This lightweight titanium disc lets your eye speak for itself with no embellishment — pure, personal, powerful.",
     priceInCents: 9999,
     images: [
       {

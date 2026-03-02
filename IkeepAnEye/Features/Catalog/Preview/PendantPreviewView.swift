@@ -3,11 +3,11 @@ import FirebaseStorage
 
 struct PendantPreviewView: View {
     let product: Product
-    let irisPhoto: IrisPhoto
+    let eyePhoto: EyePhoto
 
     @EnvironmentObject private var cartStore: CartStore
     @Environment(\.dismiss) private var dismiss
-    @State private var irisImage: UIImage?
+    @State private var eyeImage: UIImage?
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var renderedComposite: UIImage?
@@ -27,12 +27,12 @@ struct PendantPreviewView: View {
                 }
             }
 
-            // Layer 2: iris oval at anchor position (landscape 3:2)
-            if let irisImage {
+            // Layer 2: eye oval at anchor position (landscape 3:2)
+            if let eyeImage {
                 GeometryReader { geo in
                     let w = geo.size.width  * product.pendantDiameterFraction
                     let h = w * (2.0 / 3.0)
-                    Image(uiImage: irisImage)
+                    Image(uiImage: eyeImage)
                         .resizable()
                         .scaledToFill()
                         .frame(width: w, height: h)
@@ -64,7 +64,7 @@ struct PendantPreviewView: View {
                 Button {
                     cartStore.add(CartItem(
                         product: product,
-                        irisPhoto: irisPhoto,
+                        eyePhoto: eyePhoto,
                         compositeImage: renderedComposite
                     ))
                     dismiss()
@@ -77,17 +77,17 @@ struct PendantPreviewView: View {
         }
         .navigationTitle("Preview")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await loadIrisImage() }
+        ..task { await loadEyeImage() }
         .errorAlert(message: $errorMessage)
     }
 
-    private func loadIrisImage() async {
+    private func loadEyeImage() async {
         isLoading = true
         defer { isLoading = false }
         do {
-            let ref = Storage.storage().reference().child(irisPhoto.croppedStoragePath)
+            let ref = Storage.storage().reference().child(eyePhoto.croppedStoragePath)
             let data = try await ref.data(maxSize: 10 * 1024 * 1024)
-            irisImage = UIImage(data: data)
+            eyeImage = UIImage(data: data)
         } catch {
             errorMessage = error.localizedDescription
         }

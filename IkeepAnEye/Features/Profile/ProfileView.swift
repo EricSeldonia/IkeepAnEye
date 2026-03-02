@@ -25,7 +25,7 @@ struct ProfileView: View {
             }
 
             Section("Account") {
-                NavigationLink("Manage Iris Photos") { ManageIrisPhotosView() }
+                NavigationLink("Manage Eye Photos") { ManageEyePhotosView() }
                 NavigationLink("Shipping Addresses") { ShippingAddressView() }
             }
 
@@ -33,7 +33,7 @@ struct ProfileView: View {
                 NavigationLink("Privacy Policy") {
                     PrivacyPolicyView()
                 }
-                Text("Iris photos are processed entirely on-device and never shared with third parties.")
+                Text("Eye photos are processed entirely on-device and never shared with third parties.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -62,7 +62,7 @@ struct ProfileView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently deletes your account and all iris photos. This cannot be undone.")
+            Text("This permanently deletes your account and all eye photos. This cannot be undone.")
         }
         .errorAlert(message: $errorMessage)
     }
@@ -79,7 +79,7 @@ struct ProfileView: View {
 private struct PrivacyPolicyView: View {
     var body: some View {
         ScrollView {
-            Text("Privacy Policy\n\nIkeepAnEye processes iris photos entirely on your device using Apple's Vision framework. Photos are only uploaded to our secure cloud storage after you explicitly tap \"Use This Photo\". We never share your biometric data with third parties.\n\nYou may delete all your iris photos and account data at any time from the Profile tab.")
+            Text("Privacy Policy\n\nIkeepAnEye processes eye photos entirely on your device using Apple's Vision framework. Photos are only uploaded to our secure cloud storage after you explicitly tap \"Use This Photo\". We never share your biometric data with third parties.\n\nYou may delete all your eye photos and account data at any time from the Profile tab.")
                 .padding()
         }
         .navigationTitle("Privacy Policy")

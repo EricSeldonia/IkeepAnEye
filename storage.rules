@@ -25,12 +25,12 @@ service firebase.storage {
              firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
 
-    // ─── Iris Photos ─────────────────────────────────────────────────────────
-    // Path: users/{uid}/iris/{photoId}/original.jpg
-    //       users/{uid}/iris/{photoId}/cropped.jpg
+    // ─── Eye Photos ─────────────────────────────────────────────────────────
+    // Path: users/{uid}/eye/{photoId}/original.jpg
+    //       users/{uid}/eye/{photoId}/cropped.jpg
 
-    match /users/{uid}/iris/{allPaths=**} {
-      // The owning user or an admin can read iris photos
+    match /users/{uid}/eye/{allPaths=**} {
+      // The owning user or an admin can read eye photos
       allow read: if isOwner(uid) || isAdmin();
 
       // Client can write (upload) — but only images under 10MB
@@ -39,7 +39,7 @@ service firebase.storage {
         && isImage()
         && isUnder10MB();
 
-      // Deletion is handled by Cloud Functions only (deleteUserData, deleteIrisPhoto)
+      // Deletion is handled by Cloud Functions only (deleteUserData, deleteEyePhoto)
       allow delete: if false;
     }
 

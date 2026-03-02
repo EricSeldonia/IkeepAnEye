@@ -41,9 +41,9 @@ struct OrderDetailView: View {
                         .padding()
                         .cardStyle()
 
-                        // Iris photo (if personalised)
-                        if let irisPath = order.irisPhotoStoragePath {
-                            IrisPhotoSection(storagePath: irisPath)
+                        // Eye photo (if personalised)
+                        if let eyePath = order.eyePhotoStoragePath {
+                            EyePhotoSection(storagePath: eyePath)
                                 .padding()
                                 .cardStyle()
                         }
@@ -138,16 +138,16 @@ struct OrderDetailView: View {
     }
 }
 
-// MARK: - Iris photo card
+// MARK: - Eye photo card
 
-private struct IrisPhotoSection: View {
+private struct EyePhotoSection: View {
     let storagePath: String
     @State private var url: URL?
     @State private var failed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Iris Photo").font(.caption).foregroundColor(.secondary)
+            Text("Eye Photo").font(.caption).foregroundColor(.secondary)
 
             Group {
                 if let url {

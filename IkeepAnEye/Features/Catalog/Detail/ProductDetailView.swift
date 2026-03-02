@@ -6,9 +6,9 @@ struct ProductDetailView: View {
     let product: Product
     @StateObject private var viewModel: ProductDetailViewModel
     @EnvironmentObject private var cartStore: CartStore
-    @State private var showIrisCapture = false
+    @State private var showEyeCapture = false
     @State private var selectedImageIndex = 0
-    @State private var selectedIrisPhoto: IrisPhoto?
+    @State private var selectedEyePhoto: EyePhoto?
     @State private var showAddedToast = false
 
     init(product: Product) {
@@ -60,7 +60,7 @@ struct ProductDetailView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
                                 // "None" option
-                                Button { selectedIrisPhoto = nil } label: {
+                                Button { selectedEyePhoto = nil } label: {
                                     VStack(spacing: 4) {
                                         ZStack {
                                             Ellipse()
@@ -71,7 +71,7 @@ struct ProductDetailView: View {
                                         }
                                         .overlay(
                                             Ellipse().stroke(
-                                                selectedIrisPhoto == nil ? Color.accentColor : Color.clear,
+                                                selectedEyePhoto == nil ? Color.accentColor : Color.clear,
                                                 lineWidth: 3
                                             )
                                         )
@@ -82,13 +82,13 @@ struct ProductDetailView: View {
                                 }
                                 .buttonStyle(.plain)
 
-                                // Stored iris photos
-                                ForEach(viewModel.irisPhotos) { photo in
-                                    Button { selectedIrisPhoto = photo } label: {
+                                // Stored eye photos
+                                ForEach(viewModel.eyePhotos) { photo in
+                                    Button { selectedEyePhoto = photo } label: {
                                         VStack(spacing: 4) {
-                                            IrisThumbnailView(
+                                            EyeThumbnailView(
                                                 photo: photo,
-                                                isSelected: selectedIrisPhoto?.id == photo.id
+                                                isSelected: selectedEyePhoto?.id == photo.id
                                             )
                                             Text("Eye")
                                                 .font(.caption2)
@@ -99,7 +99,7 @@ struct ProductDetailView: View {
                                 }
 
                                 // Snap new photo
-                                Button { showIrisCapture = true } label: {
+                                Button { showEyeCapture = true } label: {
                                     VStack(spacing: 4) {
                                         ZStack {
                                             Ellipse()
@@ -119,10 +119,10 @@ struct ProductDetailView: View {
                             .padding(.vertical, 4)
                         }
 
-                        if let iris = selectedIrisPhoto {
+                        if let eye = selectedEyePhoto {
                             NavigationLink(destination: PendantPreviewView(
                                 product: product,
-                                irisPhoto: iris
+                                eyePhoto: eye
                             )) {
                                 Text("Preview Pendant")
                             }
@@ -130,7 +130,7 @@ struct ProductDetailView: View {
                         }
 
                         Button {
-                            cartStore.add(CartItem(product: product, irisPhoto: selectedIrisPhoto))
+                            cartStore.add(CartItem(product: product, eyePhoto: selectedEyePhoto))
                             withAnimation { showAddedToast = true }
                             Task {
                                 try? await Task.sleep(nanoseconds: 2_000_000_000)
@@ -154,11 +154,11 @@ struct ProductDetailView: View {
                 "productName": product.name,
             ])
         }
-        .task { await viewModel.loadIrisPhotos() }
-        .fullScreenCover(isPresented: $showIrisCapture) {
+        .task { await viewModel.loadEyePhotos() }
+        .fullScreenCover(isPresented: $showEyeCapture) {
             CameraView(onCapture: { _ in
-                showIrisCapture = false
-                Task { await viewModel.loadIrisPhotos() }
+                showEyeCapture = false
+                Task { await viewModel.loadEyePhotos() }
             })
         }
         .overlay(alignment: .bottom) {
@@ -178,9 +178,9 @@ struct ProductDetailView: View {
     }
 }
 
-/// Loads and displays a single iris photo thumbnail from Firebase Storage.
-private struct IrisThumbnailView: View {
-    let photo: IrisPhoto
+/// Loads and displays a single eye photo thumbnail from Firebase Storage.
+private struct EyeThumbnailView: View {
+    let photo: EyePhoto
     let isSelected: Bool
 
     @State private var image: UIImage?

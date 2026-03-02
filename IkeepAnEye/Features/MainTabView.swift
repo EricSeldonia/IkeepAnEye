@@ -14,7 +14,7 @@ struct MainTabView: View {
             .tag(0)
 
             NavigationStack {
-                IrisCaptureContainerView()
+                EyeCaptureContainerView()
             }
             .tabItem {
                 Label("My Eye", systemImage: "eye.fill")
@@ -40,8 +40,8 @@ struct MainTabView: View {
     }
 }
 
-/// Entry point for the IrisCapture tab.
-struct IrisCaptureContainerView: View {
+/// Entry point for the EyeCapture tab.
+struct EyeCaptureContainerView: View {
     @State private var showCapture = false
 
     var body: some View {
@@ -50,7 +50,7 @@ struct IrisCaptureContainerView: View {
             Image(systemName: "eye.circle.fill")
                 .font(.system(size: 64))
                 .foregroundColor(.accentColor)
-            Text("Your Iris")
+            Text("Your Eye")
                 .font(.title2.bold())
             Text("Photograph your eye to create a unique pendant.")
                 .font(.subheadline)
@@ -64,7 +64,7 @@ struct IrisCaptureContainerView: View {
             .padding(.horizontal, 40)
             Spacer()
         }
-        .navigationTitle("Iris Capture")
+        .navigationTitle("Eye Capture")
         .fullScreenCover(isPresented: $showCapture) {
             CameraView(onCapture: { _ in
                 showCapture = false

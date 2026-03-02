@@ -96,7 +96,7 @@ private struct CartItemRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.product.name)
                     .font(.subheadline.weight(.medium))
-                if item.irisPhoto != nil {
+                if item.eyePhoto != nil {
                     Text("Personalized")
                         .font(.caption)
                         .foregroundColor(.accentColor)

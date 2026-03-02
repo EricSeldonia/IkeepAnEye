@@ -6,8 +6,8 @@ import FirebaseFirestore
 final class ProductDetailViewModel: ObservableObject {
     let product: Product
 
-    @Published var irisPhotos: [IrisPhoto] = []
-    @Published var selectedIrisPhoto: IrisPhoto?
+    @Published var eyePhotos: [EyePhoto] = []
+    @Published var selectedEyePhoto: EyePhoto?
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -17,19 +17,19 @@ final class ProductDetailViewModel: ObservableObject {
         self.product = product
     }
 
-    func loadIrisPhotos() async {
+    func loadEyePhotos() async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         isLoading = true
         defer { isLoading = false }
         do {
             let snapshot = try await db
                 .collection("users").document(uid)
-                .collection("irisPhotos")
+                .collection("eyePhotos")
                 .whereField("isActive", isEqualTo: true)
                 .order(by: "capturedAt", descending: true)
                 .getDocuments()
-            irisPhotos = snapshot.documents.compactMap { try? $0.data(as: IrisPhoto.self) }
-            selectedIrisPhoto = irisPhotos.first
+            eyePhotos = snapshot.documents.compactMap { try? $0.data(as: EyePhoto.self) }
+            selectedEyePhoto = eyePhotos.first
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -24,7 +24,7 @@ struct OrderConfirmationView: View {
             }
 
             VStack(spacing: 6) {
-                Text("We're crafting your unique iris pendant.")
+                Text("We're crafting your unique pendant.")
                     .font(.subheadline)
                 Text("You'll receive an email when it ships.")
                     .font(.subheadline)

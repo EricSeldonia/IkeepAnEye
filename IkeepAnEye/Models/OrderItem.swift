@@ -4,6 +4,6 @@ import Foundation
 struct OrderItem: Identifiable {
     var id = UUID()
     var product: Product
-    var irisPhoto: IrisPhoto
+    var eyePhoto: EyePhoto
     var shipping: Address?
 }

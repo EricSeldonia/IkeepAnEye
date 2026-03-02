@@ -10,8 +10,8 @@ export type OrderStatus =
 export interface Order {
   userId: string;
   status: OrderStatus;
-  irisPhotoId: string;
-  irisPhotoStoragePath: string;
+  eyePhotoId: string;
+  eyePhotoStoragePath: string;
   productId: string;
   productSnapshot: {
     name: string;

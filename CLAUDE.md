@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-IkeepAnEye — an iOS app that lets users photograph their iris and order a custom iris-engraved pendant.
+IkeepAnEye — an iOS app that lets users photograph their eye and order a custom pendant.
 
 Repository: https://github.com/EricSeldonia/IkeepAnEye
 
@@ -22,7 +22,7 @@ Repository: https://github.com/EricSeldonia/IkeepAnEye
 - `RootCoordinator.swift` — auth state → LandingView or MainTabView
 - `CartStore.swift` — @MainActor ObservableObject; source of truth for cart
 - `ProductService.swift` — Firestore real-time listener on `products` collection
-- `IrisDetectionService.swift` — on-device Vision pipeline, never uploads until user confirms
+- `EyeDetectionService.swift` — on-device Vision pipeline, never uploads until user confirms
 - `StripeService.swift` — calls `createPaymentIntent` Cloud Function
 - Cloud Functions in `functions/src/` (TypeScript, Node 20, firebase-functions v5)
 

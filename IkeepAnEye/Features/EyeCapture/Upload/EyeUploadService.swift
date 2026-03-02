@@ -4,7 +4,7 @@ import FirebaseStorage
 import FirebaseFirestore
 
 @MainActor
-final class IrisUploadService: ObservableObject {
+final class EyeUploadService: ObservableObject {
     @Published var isUploading = false
     @Published var uploadProgress: Double = 0
     @Published var errorMessage: String?
@@ -12,9 +12,9 @@ final class IrisUploadService: ObservableObject {
     private let storage = Storage.storage()
     private let firestore = Firestore.firestore()
 
-    /// Uploads original and cropped iris images, then creates a Firestore record.
-    /// Returns the saved IrisPhoto.
-    func upload(original: UIImage, cropped: UIImage, confidence: Double) async throws -> IrisPhoto {
+    /// Uploads original and cropped eye images, then creates a Firestore record.
+    /// Returns the saved EyePhoto.
+    func upload(original: UIImage, cropped: UIImage, confidence: Double) async throws -> EyePhoto {
         guard let uid = Auth.auth().currentUser?.uid else {
             throw UploadError.notAuthenticated
         }
@@ -23,7 +23,7 @@ final class IrisUploadService: ObservableObject {
         defer { isUploading = false }
 
         let photoId = UUID().uuidString
-        let basePath = "users/\(uid)/iris/\(photoId)"
+        let basePath = "users/\(uid)/eye/\(photoId)"
         let originalPath = "\(basePath)/original.jpg"
         let croppedPath  = "\(basePath)/cropped.jpg"
 
@@ -50,7 +50,7 @@ final class IrisUploadService: ObservableObject {
         }
 
         // Write Firestore record (client-writable per security rules)
-        let irisPhoto = IrisPhoto(
+        let eyePhoto = EyePhoto(
             originalStoragePath: originalPath,
             croppedStoragePath: croppedPath,
             capturedAt: .init(),
@@ -59,11 +59,11 @@ final class IrisUploadService: ObservableObject {
         )
         let docRef = firestore
             .collection("users").document(uid)
-            .collection("irisPhotos").document(photoId)
-        try docRef.setData(from: irisPhoto)
+            .collection("eyePhotos").document(photoId)
+        try docRef.setData(from: eyePhoto)
 
         uploadProgress = 1.0
-        return irisPhoto
+        return eyePhoto
     }
 }
 

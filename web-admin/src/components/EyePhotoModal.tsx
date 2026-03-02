@@ -7,7 +7,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function IrisPhotoModal({ storagePath, onClose }: Props) {
+export default function EyePhotoModal({ storagePath, onClose }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +27,7 @@ export default function IrisPhotoModal({ storagePath, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Iris Photo</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Eye Photo</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
@@ -48,7 +48,7 @@ export default function IrisPhotoModal({ storagePath, onClose }: Props) {
           <>
             <img
               src={url}
-              alt="Iris"
+              alt="Eye"
               className="w-full rounded-lg object-contain max-h-80"
             />
             <div className="flex gap-3 mt-4">
@@ -62,7 +62,7 @@ export default function IrisPhotoModal({ storagePath, onClose }: Props) {
               </a>
               <a
                 href={url}
-                download="iris-photo.jpg"
+                download="eye-photo.jpg"
                 className="flex-1 text-center px-4 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Download

@@ -28,7 +28,7 @@ final class CartViewModel: ObservableObject {
             for item in items {
                 let order = try await OrderService.shared.createOrder(
                     product: item.product,
-                    irisPhoto: item.irisPhoto,
+                    eyePhoto: item.eyePhoto,
                     shipping: shipping,
                     previewStoragePath: nil
                 )

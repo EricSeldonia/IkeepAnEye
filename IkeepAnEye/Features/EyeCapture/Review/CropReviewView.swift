@@ -9,7 +9,7 @@ struct CropReviewView: View {
     @State private var isDetecting = true
     @State private var viewSize: CGSize = .zero
 
-    private let detectionService = IrisDetectionService()
+    private let detectionService = EyeDetectionService()
 
     var body: some View {
         NavigationStack {
@@ -59,7 +59,7 @@ struct CropReviewView: View {
     private func runDetection(in containerSize: CGSize) async {
         do {
             let region = try await detectionService.detect(in: image)
-            // Update crop rect with detected iris position
+            // Update crop rect with detected eye position
             cropRect = imageRectToViewRect(region.rect, containerSize: containerSize)
         } catch {
             // Detection failed — default crop set in onAppear remains active
@@ -83,7 +83,7 @@ struct CropReviewView: View {
     private func acceptCrop() {
         let imageRect = viewRectToImageRect(cropRect)
         guard let cropped = image.cropped(to: imageRect) else { return }
-        AnalyticsService.shared.track("iris_capture_completed")
+        AnalyticsService.shared.track("eye_capture_completed")
         onAccept(cropped.ovalCropped)
     }
 

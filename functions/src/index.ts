@@ -17,4 +17,4 @@ export { onOrderStatusChanged } from "./functions/orders/onOrderStatusChanged";
 export { refundOrder }          from "./functions/orders/refundOrder";
 
 // Photo management
-export { deleteIrisPhoto } from "./functions/photos/deleteIrisPhoto";
+export { deleteEyePhoto } from "./functions/photos/deleteEyePhoto";

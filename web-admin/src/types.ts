@@ -51,8 +51,8 @@ export interface Order {
   id: string;
   userId: string;
   status: OrderStatus;
-  irisPhotoId?: string;
-  irisPhotoStoragePath?: string;
+  eyePhotoId?: string;
+  eyePhotoStoragePath?: string;
   productId: string;
   productSnapshot: ProductSnapshot;
   shipping: Address;
@@ -92,7 +92,7 @@ export interface AppUser {
   lastSignInAt?: Timestamp;
 }
 
-export interface IrisPhoto {
+export interface EyePhoto {
   id: string;
   originalStoragePath: string;
   croppedStoragePath: string;

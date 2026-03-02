@@ -11,9 +11,9 @@ import {
 } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { AppUser, IrisPhoto, Order, UserEvent } from "../types";
+import { AppUser, EyePhoto, Order, UserEvent } from "../types";
 import { useUserEvents } from "../hooks/useUserEvents";
-import IrisPhotoModal from "../components/IrisPhotoModal";
+import EyePhotoModal from "../components/EyePhotoModal";
 import OrderStatusBadge from "../components/OrderStatusBadge";
 
 function fmt(cents: number) {
@@ -23,8 +23,8 @@ function fmt(cents: number) {
 const EVENT_LABELS: Record<string, string> = {
   catalog_viewed: "Viewed catalog",
   product_viewed: "Viewed product",
-  iris_capture_started: "Started iris capture",
-  iris_capture_completed: "Completed iris capture",
+  iris_capture_started: "Started eye capture",
+  iris_capture_completed: "Completed eye capture",
   cart_viewed: "Viewed cart",
   checkout_started: "Started checkout",
   payment_completed: "Completed payment",
@@ -73,13 +73,13 @@ function groupBySession(events: UserEvent[]) {
 export default function CustomerDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const [user, setUser] = useState<AppUser | null>(null);
-  const [irisPhotos, setIrisPhotos] = useState<IrisPhoto[]>([]);
+  const [eyePhotos, setEyePhotos] = useState<EyePhoto[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedIrisPath, setSelectedIrisPath] = useState<string | null>(null);
+  const [selectedEyePath, setSelectedEyePath] = useState<string | null>(null);
   const { events, loading: eventsLoading } = useUserEvents(userId ?? "");
 
-  // Iris photo thumbnail URLs
+  // Eye photo thumbnail URLs
   const [thumbURLs, setThumbURLs] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function CustomerDetailPage() {
         getDoc(doc(db, "users", userId!)),
         getDocs(
           query(
-            collection(db, "users", userId!, "irisPhotos"),
+            collection(db, "users", userId!, "eyePhotos"),
             orderBy("capturedAt", "desc")
           )
         ),
@@ -107,14 +107,14 @@ export default function CustomerDetailPage() {
         setUser({ id: userSnap.id, ...userSnap.data() } as AppUser);
       }
       const photos = photosSnap.docs.map(
-        (d) => ({ id: d.id, ...d.data() } as IrisPhoto)
+        (d) => ({ id: d.id, ...d.data() } as EyePhoto)
       );
-      setIrisPhotos(photos);
+      setEyePhotos(photos);
       setOrders(
         ordersSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Order))
       );
 
-      // Fetch thumbnail download URLs for iris photos
+      // Fetch thumbnail download URLs for eye photos
       const urlMap: Record<string, string> = {};
       await Promise.all(
         photos.map(async (p) => {
@@ -167,25 +167,25 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Iris Photos */}
+      {/* Eye Photos */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
-          Iris Photos ({irisPhotos.length})
+          Eye Photos ({eyePhotos.length})
         </h2>
-        {irisPhotos.length === 0 ? (
-          <p className="text-sm text-gray-400">No iris photos.</p>
+        {eyePhotos.length === 0 ? (
+          <p className="text-sm text-gray-400">No eye photos.</p>
         ) : (
           <div className="flex flex-wrap gap-3">
-            {irisPhotos.map((photo) => (
+            {eyePhotos.map((photo) => (
               <button
                 key={photo.id}
-                onClick={() => setSelectedIrisPath(photo.croppedStoragePath)}
+                onClick={() => setSelectedEyePath(photo.croppedStoragePath)}
                 className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-transparent hover:border-blue-500 transition-colors flex-shrink-0"
               >
                 {thumbURLs[photo.id] ? (
                   <img
                     src={thumbURLs[photo.id]}
-                    alt="Iris"
+                    alt="Eye"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -301,10 +301,10 @@ export default function CustomerDetailPage() {
         )}
       </div>
 
-      {selectedIrisPath && (
-        <IrisPhotoModal
-          storagePath={selectedIrisPath}
-          onClose={() => setSelectedIrisPath(null)}
+      {selectedEyePath && (
+        <EyePhotoModal
+          storagePath={selectedEyePath}
+          onClose={() => setSelectedEyePath(null)}
         />
       )}
     </div>

@@ -1,17 +1,17 @@
 import * as functions from "firebase-functions";
 import { db, storage } from "../../config/firebase";
 
-interface DeleteIrisPhotoRequest {
+interface DeleteEyePhotoRequest {
   photoId: string;
 }
 
 /**
- * Callable CF: marks an iris photo inactive and deletes the Storage files.
+ * Callable CF: marks an eye photo inactive and deletes the Storage files.
  * Client update in Firestore only flips isActive=false; this CF does the cleanup.
  * Only the owning user can call this.
  */
-export const deleteIrisPhoto = functions.https.onCall(
-  async (data: DeleteIrisPhotoRequest, context) => {
+export const deleteEyePhoto = functions.https.onCall(
+  async (data: DeleteEyePhotoRequest, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -31,7 +31,7 @@ export const deleteIrisPhoto = functions.https.onCall(
     const photoRef = db
       .collection("users")
       .doc(uid)
-      .collection("irisPhotos")
+      .collection("eyePhotos")
       .doc(photoId);
 
     const photoSnap = await photoRef.get();
@@ -59,7 +59,7 @@ export const deleteIrisPhoto = functions.https.onCall(
     // Hard-delete the Firestore document
     await photoRef.delete();
 
-    console.log(`Deleted iris photo ${photoId} for user ${uid}`);
+    console.log(`Deleted eye photo ${photoId} for user ${uid}`);
     return { success: true };
   }
 );

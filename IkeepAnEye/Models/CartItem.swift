@@ -3,13 +3,13 @@ import UIKit
 struct CartItem: Identifiable {
     let id: UUID
     let product: Product
-    let irisPhoto: IrisPhoto?
+    let eyePhoto: EyePhoto?
     let compositeImage: UIImage?
 
-    init(id: UUID = UUID(), product: Product, irisPhoto: IrisPhoto? = nil, compositeImage: UIImage? = nil) {
+    init(id: UUID = UUID(), product: Product, eyePhoto: EyePhoto? = nil, compositeImage: UIImage? = nil) {
         self.id = id
         self.product = product
-        self.irisPhoto = irisPhoto
+        self.eyePhoto = eyePhoto
         self.compositeImage = compositeImage
     }
 }
