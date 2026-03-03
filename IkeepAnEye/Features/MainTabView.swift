@@ -29,8 +29,8 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             NavigationStack {
                 CatalogGridView()
+                    .toolbar { cartToolbarItem }
             }
-            .toolbar { cartToolbarItem }
             .tabItem {
                 Label("Shop", systemImage: "sparkles")
             }
@@ -38,8 +38,8 @@ struct MainTabView: View {
 
             NavigationStack {
                 EyeCaptureContainerView()
+                    .toolbar { cartToolbarItem }
             }
-            .toolbar { cartToolbarItem }
             .tabItem {
                 Label("My Eye", systemImage: "eye.fill")
             }
@@ -47,8 +47,8 @@ struct MainTabView: View {
 
             NavigationStack {
                 OrderHistoryListView()
+                    .toolbar { cartToolbarItem }
             }
-            .toolbar { cartToolbarItem }
             .tabItem {
                 Label("Orders", systemImage: "shippingbox")
             }
@@ -56,8 +56,8 @@ struct MainTabView: View {
 
             NavigationStack {
                 ProfileView()
+                    .toolbar { cartToolbarItem }
             }
-            .toolbar { cartToolbarItem }
             .tabItem {
                 Label("Profile", systemImage: "person.circle")
             }
