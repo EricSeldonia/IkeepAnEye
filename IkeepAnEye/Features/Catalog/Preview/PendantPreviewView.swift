@@ -77,7 +77,7 @@ struct PendantPreviewView: View {
         }
         .navigationTitle("Preview")
         .navigationBarTitleDisplayMode(.inline)
-        ..task { await loadEyeImage() }
+        .task { await loadEyeImage() }
         .errorAlert(message: $errorMessage)
     }
 
