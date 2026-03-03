@@ -1,4 +1,6 @@
 import Foundation
+import FirebaseAuth
+import FirebaseFirestore
 
 @MainActor
 final class CartViewModel: ObservableObject {
@@ -7,7 +9,22 @@ final class CartViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var createdOrder: Order?
 
+    private let db = Firestore.firestore()
+
     init() {}
+
+    func loadDefaultAddress() async {
+        guard shipping == nil, let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            let snap = try await db.collection("users").document(uid).getDocument()
+            if let raw = snap.data()?["defaultShipping"] {
+                let json = try JSONSerialization.data(withJSONObject: raw)
+                shipping = try JSONDecoder().decode(Address.self, from: json)
+            }
+        } catch {
+            // silently ignore — user can enter manually
+        }
+    }
 
     func canProceed(items: [CartItem]) -> Bool { shipping != nil && !items.isEmpty }
 

@@ -167,6 +167,25 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
+      {/* Shipping Address */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+          Default Shipping Address
+        </h2>
+        {user.defaultShipping ? (
+          <address className="not-italic text-sm text-gray-700 leading-relaxed">
+            {user.defaultShipping.name}<br />
+            {user.defaultShipping.line1}<br />
+            {user.defaultShipping.line2 && <>{user.defaultShipping.line2}<br /></>}
+            {user.defaultShipping.city}, {user.defaultShipping.state}{" "}
+            {user.defaultShipping.postalCode}<br />
+            {user.defaultShipping.country}
+          </address>
+        ) : (
+          <p className="text-sm text-gray-400">No address saved.</p>
+        )}
+      </div>
+
       {/* Eye Photos */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">

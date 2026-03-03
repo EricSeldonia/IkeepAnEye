@@ -10,7 +10,7 @@ import { httpsCallable } from "firebase/functions";
 import { db, functions } from "../firebase";
 import { Order } from "../types";
 import OrderStatusBadge from "../components/OrderStatusBadge";
-import EyePhotoModal from "../components/EyePhotoModal";
+import EyeThumb from "../components/EyeThumb";
 
 function fmt(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -23,7 +23,6 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showEyeModal, setShowEyeModal] = useState(false);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [carrier, setCarrier] = useState("");
@@ -175,7 +174,7 @@ export default function OrderDetailPage() {
               className="w-16 h-16 rounded-lg object-cover bg-gray-100"
             />
           )}
-          <div>
+          <div className="flex-1">
             <p className="font-medium text-gray-900">
               {order.productSnapshot?.name}
             </p>
@@ -183,15 +182,13 @@ export default function OrderDetailPage() {
               {fmt(order.productSnapshot?.priceInCents ?? 0)}
             </p>
           </div>
+          {eyePath && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Eye Photo</p>
+              <EyeThumb storagePath={eyePath} />
+            </div>
+          )}
         </div>
-        {eyePath && (
-          <button
-            onClick={() => setShowEyeModal(true)}
-            className="mt-4 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-          >
-            View Eye Photo
-          </button>
-        )}
       </div>
 
       {/* Pricing */}
@@ -341,12 +338,6 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {showEyeModal && eyePath && (
-        <EyePhotoModal
-          storagePath={eyePath}
-          onClose={() => setShowEyeModal(false)}
-        />
-      )}
     </div>
   );
 }

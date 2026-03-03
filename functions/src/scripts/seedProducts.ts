@@ -60,7 +60,7 @@ const products: ProductSeed[] = [
     images: [
       {
         storagePath: "",
-        downloadURL: "https://placehold.co/800x800/D4B896/FFFFFF?text=Classic+Iris+Pendant",
+        downloadURL: "https://placehold.co/800x800/D4B896/FFFFFF.png?text=Classic+Eye+Pendant",
         isMain: true,
       },
     ],
@@ -81,7 +81,7 @@ const products: ProductSeed[] = [
     images: [
       {
         storagePath: "",
-        downloadURL: "https://placehold.co/800x800/C9A0A0/FFFFFF?text=Rose+Gold+Iris+Locket",
+        downloadURL: "https://placehold.co/800x800/C9A0A0/FFFFFF.png?text=Rose+Gold+Eye+Locket",
         isMain: true,
       },
     ],
@@ -102,7 +102,7 @@ const products: ProductSeed[] = [
     images: [
       {
         storagePath: "",
-        downloadURL: "https://placehold.co/800x800/B0BEC5/FFFFFF?text=Minimalist+Iris+Disc",
+        downloadURL: "https://placehold.co/800x800/B0BEC5/FFFFFF.png?text=Minimalist+Eye+Disc",
         isMain: true,
       },
     ],

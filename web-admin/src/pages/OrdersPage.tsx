@@ -120,7 +120,15 @@ export default function OrdersPage() {
                   <OrderStatusBadge status={order.status} />
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-500">
-                  {order.createdAt?.toDate().toLocaleDateString() ?? "—"}
+                  {order.createdAt ? (
+                    <>
+                      <span>{order.createdAt.toDate().toLocaleDateString()}</span>
+                      <br />
+                      <span className="text-xs text-gray-400">
+                        {order.createdAt.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </>
+                  ) : "—"}
                 </td>
               </tr>
             ))}

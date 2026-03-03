@@ -99,8 +99,7 @@ final class CheckoutViewModel: ObservableObject {
     }
 
     func loadPaymentSheet() async {
-        guard let orderId = order.id else { return }
-        paymentSheet = nil
+        guard !paymentSucceeded, let orderId = order.id else { return }
         isLoading = true
         defer { isLoading = false }
         do {

@@ -3,8 +3,6 @@ import SDWebImageSwiftUI
 
 struct CatalogGridView: View {
     @StateObject private var viewModel = CatalogGridViewModel()
-    @EnvironmentObject private var cartStore: CartStore
-    @State private var showCart = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -43,30 +41,6 @@ struct CatalogGridView: View {
             }
         }
         .navigationTitle("Shop")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button { showCart = true } label: {
-                    ZStack(alignment: .topTrailing) {
-                        Image(systemName: "cart")
-                            .font(.title2)
-                        if cartStore.itemCount > 0 {
-                            Text("\(cartStore.itemCount)")
-                                .font(.caption2.bold())
-                                .foregroundColor(.white)
-                                .padding(4)
-                                .background(Color.red)
-                                .clipShape(Circle())
-                                .offset(x: 10, y: -10)
-                        }
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $showCart) {
-            NavigationStack {
-                CartView()
-            }
-        }
         .onAppear {
             viewModel.onAppear()
             AnalyticsService.shared.track("catalog_viewed")

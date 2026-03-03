@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 final class CartStore: ObservableObject {
     @Published var items: [CartItem] = []
+    @Published var shouldDismiss = false
 
     var itemCount: Int { items.count }
     var totalCents: Int { items.reduce(0) { $0 + $1.product.priceInCents } }

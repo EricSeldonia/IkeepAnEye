@@ -17,6 +17,16 @@ struct OrderDetailView: View {
             if viewModel.isLoading && viewModel.order == nil {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.order == nil {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
+                    Text("Could not load order")
+                        .font(.headline)
+                    Button("Retry") { Task { await viewModel.load() } }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let order = viewModel.order {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {

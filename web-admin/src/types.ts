@@ -88,6 +88,7 @@ export interface AppUser {
   email: string;
   displayName?: string;
   stripeCustomerId?: string;
+  defaultShipping?: Address;
   createdAt?: Timestamp;
   lastSignInAt?: Timestamp;
 }

@@ -2,7 +2,6 @@ import SwiftUI
 
 struct OrderConfirmationView: View {
     let order: Order
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var cartStore: CartStore
 
     var body: some View {
@@ -51,7 +50,7 @@ struct OrderConfirmationView: View {
 
             Button("Continue Shopping") {
                 cartStore.clear()
-                dismiss()
+                cartStore.shouldDismiss = true
             }
             .buttonStyle(PrimaryButtonStyle())
             .padding(.horizontal)

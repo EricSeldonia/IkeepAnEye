@@ -31,8 +31,30 @@ struct ProductDetailView: View {
                             .tag(idx)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(height: 320)
+
+                if product.images.count > 1 {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(Array(product.images.enumerated()), id: \.offset) { idx, img in
+                                Button { withAnimation { selectedImageIndex = idx } } label: {
+                                    WebImage(url: URL(string: img.downloadURL))
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 56, height: 56)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(selectedImageIndex == idx ? Color("BrandRose") : Color.clear, lineWidth: 2)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text(product.name)

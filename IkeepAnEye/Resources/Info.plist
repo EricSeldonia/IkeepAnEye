@@ -30,11 +30,11 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSCameraUsageDescription</key>
-	<string>IkeepAnEye needs camera access to photograph your eye for creating personalized iris jewelry.</string>
+	<string>IkeepAnEye needs camera access to photograph your eye for a personalized pendant.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>IkeepAnEye saves your pendant preview to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>IkeepAnEye can save and load iris photos from your photo library.</string>
+	<string>IkeepAnEye can save and load eye photos from your photo library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

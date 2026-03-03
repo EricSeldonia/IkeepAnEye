@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseStorage
 
 struct OrderHistoryListView: View {
     @StateObject private var viewModel = OrderHistoryViewModel()
@@ -32,9 +33,9 @@ struct OrderHistoryListView: View {
         }
         .onAppear {
             AnalyticsService.shared.track("order_history_viewed")
+            Task { await viewModel.load() }
         }
         .navigationTitle("Orders")
-        .task { await viewModel.load() }
         .errorAlert(message: $viewModel.errorMessage)
     }
 }
@@ -61,21 +62,51 @@ private struct OrderRow: View {
     let order: Order
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(order.productSnapshot.name)
-                    .font(.headline)
-                Spacer()
-                StatusBadge(status: order.status)
+        HStack(spacing: 10) {
+            if let path = order.eyePhotoStoragePath {
+                OrderEyeThumbView(storagePath: path)
             }
-            Text(String(format: "$%.2f", Double(order.pricing.totalCents) / 100))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            Text(order.createdAt.dateValue().formatted(date: .abbreviated, time: .omitted))
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(order.productSnapshot.name)
+                        .font(.headline)
+                    Spacer()
+                    StatusBadge(status: order.status)
+                }
+                Text(String(format: "$%.2f", Double(order.pricing.totalCents) / 100))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text(order.createdAt.dateValue().formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct OrderEyeThumbView: View {
+    let storagePath: String
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                Ellipse().fill(Color(.secondarySystemBackground))
+            }
+        }
+        .frame(width: 40, height: 28)
+        .clipShape(Ellipse())
+        .task { await load() }
+    }
+
+    private func load() async {
+        let ref = Storage.storage().reference().child(storagePath)
+        if let data = try? await ref.data(maxSize: 5 * 1024 * 1024) {
+            image = UIImage(data: data)
+        }
     }
 }
 
@@ -89,6 +120,8 @@ struct StatusBadge: View {
         case .inProduction:   return .purple
         case .shipped:        return .green
         case .delivered:      return .green
+        case .cancelled:      return .red
+        case .refunded:       return .gray
         }
     }
 

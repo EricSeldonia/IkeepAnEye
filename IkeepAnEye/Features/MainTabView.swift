@@ -3,69 +3,44 @@ import SwiftUI
 struct MainTabView: View {
     @EnvironmentObject private var cartStore: CartStore
     @State private var selectedTab = 0
-    @State private var showCart = false
-
-    private var cartToolbarItem: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarTrailing) {
-            Button { showCart = true } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "cart")
-                        .font(.title2)
-                    if cartStore.itemCount > 0 {
-                        Text("\(cartStore.itemCount)")
-                            .font(.caption2.bold())
-                            .foregroundColor(.white)
-                            .padding(4)
-                            .background(Color("BrandRose"))
-                            .clipShape(Circle())
-                            .offset(x: 10, y: -10)
-                    }
-                }
-            }
-        }
-    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
                 CatalogGridView()
-                    .toolbar { cartToolbarItem }
             }
-            .tabItem {
-                Label("Shop", systemImage: "sparkles")
-            }
+            .tabItem { Label("Shop", systemImage: "sparkles") }
             .tag(0)
 
             NavigationStack {
                 EyeCaptureContainerView()
-                    .toolbar { cartToolbarItem }
             }
-            .tabItem {
-                Label("My Eye", systemImage: "eye.fill")
-            }
+            .tabItem { Label("My Eye", systemImage: "eye.fill") }
             .tag(1)
 
             NavigationStack {
-                OrderHistoryListView()
-                    .toolbar { cartToolbarItem }
+                CartView()
             }
-            .tabItem {
-                Label("Orders", systemImage: "shippingbox")
-            }
+            .tabItem { Label("Cart", systemImage: "cart") }
+            .badge(cartStore.itemCount > 0 ? cartStore.itemCount : 0)
             .tag(2)
 
             NavigationStack {
-                ProfileView()
-                    .toolbar { cartToolbarItem }
+                OrderHistoryListView()
             }
-            .tabItem {
-                Label("Profile", systemImage: "person.circle")
-            }
+            .tabItem { Label("Orders", systemImage: "shippingbox") }
             .tag(3)
-        }
-        .sheet(isPresented: $showCart) {
+
             NavigationStack {
-                CartView()
+                ProfileView()
+            }
+            .tabItem { Label("Profile", systemImage: "person.circle") }
+            .tag(4)
+        }
+        .onChange(of: cartStore.shouldDismiss) { should in
+            if should {
+                selectedTab = 0
+                cartStore.shouldDismiss = false
             }
         }
     }

@@ -63,4 +63,6 @@ functions/node_modules/
 *.env
 .env.*
 secrets.json
+.secret.local
+functions/.secret.local
 

@@ -1,10 +1,11 @@
 import SwiftUI
+import FirebaseStorage
+
 
 struct CartView: View {
     @EnvironmentObject private var cartStore: CartStore
     @StateObject private var viewModel = CartViewModel()
     @State private var showAddressSheet = false
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         List {
@@ -44,17 +45,13 @@ struct CartView: View {
                 PricingRow(label: "Total", cents: viewModel.total(items: cartStore.items), bold: true)
             }
         }
+        .task { await viewModel.loadDefaultAddress() }
         .onAppear {
             AnalyticsService.shared.track("cart_viewed", payload: [
                 "itemCount": cartStore.itemCount,
             ])
         }
         .navigationTitle("Cart")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Close") { dismiss() }
-            }
-        }
         .navigationDestination(isPresented: Binding(
             get: { viewModel.createdOrder != nil },
             set: { if !$0 { viewModel.createdOrder = nil } }
@@ -93,18 +90,42 @@ private struct CartItemRow: View {
             .cornerRadius(8)
             .clipped()
 
+            if let photo = item.eyePhoto {
+                CartEyeThumbView(storagePath: photo.croppedStoragePath)
+            }
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.product.name)
                     .font(.subheadline.weight(.medium))
-                if item.eyePhoto != nil {
-                    Text("Personalized")
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                }
             }
             Spacer()
             Text(item.product.formattedPrice)
                 .font(.subheadline)
+        }
+    }
+}
+
+private struct CartEyeThumbView: View {
+    let storagePath: String
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                Ellipse().fill(Color(.secondarySystemBackground))
+            }
+        }
+        .frame(width: 40, height: 28)
+        .clipShape(Ellipse())
+        .task { await load() }
+    }
+
+    private func load() async {
+        let ref = Storage.storage().reference().child(storagePath)
+        if let data = try? await ref.data(maxSize: 5 * 1024 * 1024) {
+            image = UIImage(data: data)
         }
     }
 }
