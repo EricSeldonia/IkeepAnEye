@@ -17,6 +17,12 @@
 
 ## 3. Core User Journey (Customer)
 
+**Unauthenticated (guest):**
+```
+Browse catalogue  →  View product detail  →  Sign-in prompt (on cart/preview action)  →  Sign up / Sign in
+```
+
+**Authenticated:**
 ```
 Browse catalogue
   → View product detail
@@ -34,15 +40,17 @@ Browse catalogue
 - Grid of products loaded in real-time from Firestore (`products` collection).
 - Each product has a name, description, price, and one or more images (one marked as main).
 - Tapping a product opens the detail view.
+- **Guest browsing**: the catalogue and product detail are visible without sign-in. Adding to cart or previewing the pendant requires authentication (a sign-in sheet is presented inline).
 
 ### 3.2 Eye Capture
 
-- User opens the camera from the product detail view.
-- An on-device Vision pipeline detects the eye in real time and draws a live overlay.
+- User opens the camera from the product detail view or the Eye Capture tab.
+- The Eye Capture tab shows a 3-step guide (lighting, hold steady, fill the oval) before opening the camera.
+- An on-device Vision pipeline detects the eye and draws a rose-coloured ellipse guide with an instruction pill.
 - User can switch between front and rear cameras.
-- After capture, user reviews the crop and can adjust it.
-- The eye photo is **never uploaded** until the user explicitly taps "Use Photo".
-- After confirmation the photo is uploaded to Firebase Storage and a metadata document is written to the `irisPhotos` sub-collection under the user.
+- After capture, user reviews the crop ("Looks Good →" to confirm, "Retake" to redo) and can drag/resize the crop handle.
+- The eye photo is **never uploaded** until the user confirms the crop.
+- After confirmation the photo is uploaded to Firebase Storage and a metadata document is written to the `eyePhotos` sub-collection under the user.
 
 ### 3.3 Pendant Preview
 
@@ -122,7 +130,7 @@ React + Vite SPA at `/web-admin`, authenticated via Firebase Auth.
 |---|---|---|
 | `createPaymentIntent` | HTTPS callable | Creates/retrieves Stripe customer + payment intent; returns client secret |
 | `handleStripeWebhook` | HTTPS | Verifies webhook signature; marks order `paid` on `payment_intent.succeeded` |
-| `deleteEyePhoto` | HTTPS callable | Deletes iris photo from Storage + Firestore |
+| `deleteEyePhoto` | HTTPS callable | Deletes eye photo from Storage + Firestore |
 | `onOrderCreated` | Firestore trigger | Sends order confirmation email (stub — needs SendGrid/Resend) |
 
 ---
@@ -131,7 +139,7 @@ React + Vite SPA at `/web-admin`, authenticated via Firebase Auth.
 
 ```
 users/{uid}
-  ├── irisPhotos/{photoId}
+  ├── eyePhotos/{photoId}
   └── (profile fields: email, displayName, shippingAddress, stripeCustomerId*)
 
 orders/{orderId}
