@@ -11,6 +11,7 @@ struct PendantPreviewView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var renderedComposite: UIImage?
+    @State private var shimmerAnimating = false
 
     @MainActor
     private var compositeContent: some View {
@@ -22,7 +23,13 @@ struct PendantPreviewView: View {
                     case .success(let image):
                         image.resizable().scaledToFit()
                     default:
-                        Color(.secondarySystemBackground)
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color("BrandCream").opacity(shimmerAnimating ? 0.5 : 0.9))
+                            .onAppear {
+                                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                                    shimmerAnimating = true
+                                }
+                            }
                     }
                 }
             }
@@ -58,8 +65,9 @@ struct PendantPreviewView: View {
             VStack(spacing: 12) {
                 Text(product.name)
                     .font(.title3.bold())
+                    .foregroundColor(Color("BrandCharcoal"))
                 Text(product.formattedPrice)
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(Color("BrandRose"))
 
                 Button {
                     cartStore.add(CartItem(
@@ -74,6 +82,9 @@ struct PendantPreviewView: View {
                 .buttonStyle(PrimaryButtonStyle())
             }
             .padding()
+            .cardStyle()
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
         .navigationTitle("Preview")
         .navigationBarTitleDisplayMode(.inline)

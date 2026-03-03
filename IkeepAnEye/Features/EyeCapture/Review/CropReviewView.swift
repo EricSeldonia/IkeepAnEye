@@ -31,10 +31,19 @@ struct CropReviewView: View {
                             .padding(16)
                             .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
                     }
+
+                    // Drag hint caption
+                    VStack {
+                        Spacer()
+                        Text("Drag to reposition · Resize from corner")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.bottom, 8)
+                    }
                 }
                 .onAppear {
                     viewSize = geo.size
-                    // Always set a default crop immediately so "Use Photo" is never blocked
+                    // Always set a default crop immediately so "Looks Good →" is never blocked
                     setDefaultCrop(in: geo.size)
                     Task { await runDetection(in: geo.size) }
                 }
@@ -44,11 +53,13 @@ struct CropReviewView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Retake", role: .destructive) { onRetake() }
+                    Button("Retake") { onRetake() }
+                        .foregroundColor(.secondary)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Use Photo") { acceptCrop() }
+                    Button("Looks Good →") { acceptCrop() }
                         .bold()
+                        .foregroundColor(Color("BrandRose"))
                 }
             }
         }

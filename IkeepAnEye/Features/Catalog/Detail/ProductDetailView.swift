@@ -1,6 +1,7 @@
 import SwiftUI
 import SDWebImageSwiftUI
 import FirebaseStorage
+import FirebaseAuth
 
 struct ProductDetailView: View {
     let product: Product
@@ -10,6 +11,7 @@ struct ProductDetailView: View {
     @State private var selectedImageIndex = 0
     @State private var selectedEyePhoto: EyePhoto?
     @State private var showAddedToast = false
+    @State private var showSignInRequired = false
 
     init(product: Product) {
         self.product = product
@@ -37,7 +39,7 @@ struct ProductDetailView: View {
                         .font(.title2.bold())
                     Text(product.formattedPrice)
                         .font(.title3)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Color("BrandRose"))
                     Text("Material: \(product.material)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -71,7 +73,7 @@ struct ProductDetailView: View {
                                         }
                                         .overlay(
                                             Ellipse().stroke(
-                                                selectedEyePhoto == nil ? Color.accentColor : Color.clear,
+                                                selectedEyePhoto == nil ? Color("BrandRose") : Color.clear,
                                                 lineWidth: 3
                                             )
                                         )
@@ -106,7 +108,7 @@ struct ProductDetailView: View {
                                                 .fill(Color(.secondarySystemBackground))
                                                 .frame(width: 80, height: 54)
                                             Image(systemName: "camera.fill")
-                                                .foregroundColor(.accentColor)
+                                                .foregroundColor(Color("BrandRose"))
                                         }
                                         Text("New")
                                             .font(.caption2)
@@ -120,21 +122,30 @@ struct ProductDetailView: View {
                         }
 
                         if let eye = selectedEyePhoto {
-                            NavigationLink(destination: PendantPreviewView(
-                                product: product,
-                                eyePhoto: eye
-                            )) {
-                                Text("Preview Pendant")
+                            if Auth.auth().currentUser != nil {
+                                NavigationLink(destination: PendantPreviewView(
+                                    product: product,
+                                    eyePhoto: eye
+                                )) {
+                                    Text("Preview Pendant")
+                                }
+                                .buttonStyle(SecondaryButtonStyle())
+                            } else {
+                                Button("Preview Pendant") { showSignInRequired = true }
+                                    .buttonStyle(SecondaryButtonStyle())
                             }
-                            .buttonStyle(SecondaryButtonStyle())
                         }
 
                         Button {
-                            cartStore.add(CartItem(product: product, eyePhoto: selectedEyePhoto))
-                            withAnimation { showAddedToast = true }
-                            Task {
-                                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                                withAnimation { showAddedToast = false }
+                            if Auth.auth().currentUser != nil {
+                                cartStore.add(CartItem(product: product, eyePhoto: selectedEyePhoto))
+                                withAnimation { showAddedToast = true }
+                                Task {
+                                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                                    withAnimation { showAddedToast = false }
+                                }
+                            } else {
+                                showSignInRequired = true
                             }
                         } label: {
                             Text("Add to Cart")
@@ -161,6 +172,9 @@ struct ProductDetailView: View {
                 Task { await viewModel.loadEyePhotos() }
             })
         }
+        .sheet(isPresented: $showSignInRequired) {
+            NavigationStack { SignInView() }
+        }
         .overlay(alignment: .bottom) {
             if showAddedToast {
                 Text("Added to cart!")
@@ -168,7 +182,7 @@ struct ProductDetailView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
-                    .background(Color.accentColor)
+                    .background(Color("BrandRose"))
                     .cornerRadius(24)
                     .padding(.bottom, 32)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -200,7 +214,7 @@ private struct EyeThumbnailView: View {
         .frame(width: 80, height: 54)
         .clipShape(Ellipse())
         .overlay(
-            Ellipse().stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
+            Ellipse().stroke(isSelected ? Color("BrandRose") : Color.clear, lineWidth: 3)
         )
         .task { await loadImage() }
     }

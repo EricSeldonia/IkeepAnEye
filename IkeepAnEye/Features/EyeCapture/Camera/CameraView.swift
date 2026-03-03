@@ -9,6 +9,7 @@ struct CameraView: View {
     @State private var capturedImage: UIImage?
     @State private var isCapturing = false
     @State private var photosPickerItem: PhotosPickerItem?
+    @State private var ellipsePulse = false
     @Environment(\.dismiss) private var dismiss
 
     // True when there is no physical camera available (e.g. simulator on Mac Mini)
@@ -84,15 +85,31 @@ struct CameraView: View {
 
                     Spacer()
 
-                    Ellipse()
-                        .strokeBorder(Color.white.opacity(0.7), lineWidth: 2)
-                        .frame(width: 300, height: 180)
+                    // Instruction pill + rose ellipse guide
+                    VStack(spacing: 8) {
+                        Text("Centre your eye in the oval")
+                            .font(.caption.weight(.medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial, in: Capsule())
 
-                    Text("Frame your eye and eyebrow inside the oval")
-                        .font(.caption)
-                        .foregroundColor(.white)
-                        .shadow(radius: 2)
-                        .padding(.top, 8)
+                        Ellipse()
+                            .strokeBorder(Color("BrandRose"), lineWidth: 2)
+                            .frame(width: 300, height: 180)
+                            .scaleEffect(ellipsePulse ? 1.06 : 1.0)
+                            .animation(
+                                .spring(response: 0.5, dampingFraction: 0.4),
+                                value: ellipsePulse
+                            )
+                    }
+                    .onAppear {
+                        Task {
+                            try? await Task.sleep(nanoseconds: 300_000_000)
+                            ellipsePulse = true
+                            try? await Task.sleep(nanoseconds: 600_000_000)
+                            ellipsePulse = false
+                        }
+                    }
 
                     Spacer()
 

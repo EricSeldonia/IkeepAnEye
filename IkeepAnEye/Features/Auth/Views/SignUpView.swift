@@ -4,47 +4,57 @@ struct SignUpView: View {
     @StateObject private var viewModel = SignUpViewModel()
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Text("Create Account")
-                    .font(.title.bold())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 24)
+        ZStack {
+            Color("BrandCream").ignoresSafeArea()
 
-                VStack(spacing: 16) {
-                    TextField("Full Name", text: $viewModel.displayName)
-                        .textContentType(.name)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+            ScrollView {
+                VStack(spacing: 24) {
+                    Text("Create Account")
+                        .font(.title.bold())
+                        .foregroundColor(Color("BrandCharcoal"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 24)
 
-                    TextField("Email", text: $viewModel.email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .textContentType(.emailAddress)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                    VStack(spacing: 16) {
+                        TextField("Full Name", text: $viewModel.displayName)
+                            .textContentType(.name)
+                            .brandTextField()
 
-                    SecureField("Password (min 8 characters)", text: $viewModel.password)
-                        .textContentType(.newPassword)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                        TextField("Email", text: $viewModel.email)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .textContentType(.emailAddress)
+                            .brandTextField()
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            SecureField("Password", text: $viewModel.password)
+                                .textContentType(.newPassword)
+                                .brandTextField()
+
+                            Text("At least 8 characters")
+                                .font(.caption)
+                                .foregroundColor(
+                                    viewModel.password.count >= 8
+                                        ? Color("BrandRose")
+                                        : Color(.tertiaryLabel)
+                                )
+                                .padding(.leading, 4)
+                        }
+                    }
+
+                    Button("Create Account") {
+                        Task { await viewModel.signUp() }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(!viewModel.isValid || viewModel.isLoading)
+
+                    Text("By creating an account you agree to our Terms of Service and Privacy Policy.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-
-                Button("Create Account") {
-                    Task { await viewModel.signUp() }
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(!viewModel.isValid || viewModel.isLoading)
-
-                Text("By creating an account you agree to our Terms of Service and Privacy Policy.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
             }
-            .padding(.horizontal, 24)
         }
         .loadingOverlay(viewModel.isLoading)
         .errorAlert(message: $viewModel.errorMessage)

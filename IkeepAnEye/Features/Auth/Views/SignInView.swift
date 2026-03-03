@@ -4,42 +4,43 @@ struct SignInView: View {
     @StateObject private var viewModel = SignInViewModel()
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Text("Welcome back")
-                    .font(.title.bold())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 24)
+        ZStack {
+            Color("BrandCream").ignoresSafeArea()
 
-                VStack(spacing: 16) {
-                    TextField("Email", text: $viewModel.email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .textContentType(.emailAddress)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+            ScrollView {
+                VStack(spacing: 24) {
+                    Text("Welcome back")
+                        .font(.title.bold())
+                        .foregroundColor(Color("BrandCharcoal"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 24)
 
-                    SecureField("Password", text: $viewModel.password)
-                        .textContentType(.password)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                    VStack(spacing: 16) {
+                        TextField("Email", text: $viewModel.email)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .textContentType(.emailAddress)
+                            .brandTextField()
+
+                        SecureField("Password", text: $viewModel.password)
+                            .textContentType(.password)
+                            .brandTextField()
+                    }
+
+                    Button("Sign In") {
+                        Task { await viewModel.signIn() }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(viewModel.isLoading)
+
+                    Button("Forgot Password?") {
+                        Task { await viewModel.sendPasswordReset() }
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(Color("BrandRose"))
                 }
-
-                Button("Sign In") {
-                    Task { await viewModel.signIn() }
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(viewModel.isLoading)
-
-                Button("Forgot Password?") {
-                    Task { await viewModel.sendPasswordReset() }
-                }
-                .font(.subheadline)
-                .foregroundColor(.accentColor)
+                .padding(.horizontal, 24)
             }
-            .padding(.horizontal, 24)
         }
         .loadingOverlay(viewModel.isLoading)
         .errorAlert(message: $viewModel.errorMessage)
