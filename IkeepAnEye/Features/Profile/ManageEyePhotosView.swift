@@ -50,9 +50,9 @@ struct ManageEyePhotosView: View {
         }
         .task { await viewModel.load() }
         .fullScreenCover(isPresented: $showCapture) {
-            CameraView(onCapture: { _ in
+            CameraView(onCapture: { eyePhoto in
                 showCapture = false
-                Task { await viewModel.load() }
+                viewModel.photos.insert(eyePhoto, at: 0)
             })
         }
         .errorAlert(message: $viewModel.errorMessage)

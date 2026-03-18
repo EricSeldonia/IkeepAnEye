@@ -8,7 +8,7 @@ import {
 import { Order } from "../../types/order";
 
 interface CreatePaymentIntentRequest {
-  orderId: string;
+  orderIds: string[];
 }
 
 interface CreatePaymentIntentResponse {
@@ -19,12 +19,12 @@ interface CreatePaymentIntentResponse {
 }
 
 /**
- * Callable Cloud Function: creates a Stripe PaymentIntent for an order.
+ * Callable Cloud Function: creates a single Stripe PaymentIntent for one or more orders.
  *
  * Security:
  * - Verifies the caller's Firebase Auth token
- * - Validates order.userId == caller's uid
- * - Reads price server-side from Firestore (never trusts client amount)
+ * - Validates all orders belong to the caller
+ * - Reads prices server-side from Firestore (never trusts client amounts)
  * - Stripe secret key is injected from Secret Manager
  */
 export const createPaymentIntent = functions
@@ -42,38 +42,15 @@ export const createPaymentIntent = functions
         );
       }
 
-      const { orderId } = data;
-      if (!orderId || typeof orderId !== "string") {
+      const { orderIds } = data;
+      if (!Array.isArray(orderIds) || orderIds.length === 0) {
         throw new functions.https.HttpsError(
           "invalid-argument",
-          "orderId is required."
+          "orderIds must be a non-empty array."
         );
       }
 
-      // Load order from Firestore
-      const orderRef = db.collection("orders").doc(orderId);
-      const orderSnap = await orderRef.get();
-      if (!orderSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Order not found.");
-      }
-      const order = orderSnap.data() as Order;
-
-      // Ownership check — prevent cross-user payment intent creation
-      if (order.userId !== context.auth.uid) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "You do not have permission to pay for this order."
-        );
-      }
-
-      if (order.status !== "pending_payment") {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          `Order status is '${order.status}', not payable.`
-        );
-      }
-
-      // Load user's Stripe customer ID (written by createUserRecord CF)
+      // Load user's Stripe customer ID once
       const userSnap = await db.collection("users").doc(context.auth.uid).get();
       const stripeCustomerId = userSnap.data()?.stripeCustomerId as
         | string
@@ -87,30 +64,52 @@ export const createPaymentIntent = functions
 
       const stripe = createStripe(stripeSecretKey.value());
 
-      // Read authoritative price from Firestore product document
-      const productSnap = await db
-        .collection("products")
-        .doc(order.productId)
-        .get();
-      if (!productSnap.exists) {
-        throw new functions.https.HttpsError(
-          "not-found",
-          "Product not found."
-        );
-      }
-      const serverPrice = productSnap.data()?.priceInCents as number;
-      const shippingCents = 999;
-      const taxCents = Math.round(serverPrice * 0.08);
-      const totalCents = serverPrice + shippingCents + taxCents;
+      // Process each order: validate + compute server-side pricing
+      let combinedTotalCents = 0;
+      const orderUpdates: Array<{ ref: FirebaseFirestore.DocumentReference; pricing: object }> = [];
 
-      // Update order pricing with server-computed values
-      await orderRef.update({
-        "pricing.subtotalCents": serverPrice,
-        "pricing.shippingCents": shippingCents,
-        "pricing.taxCents": taxCents,
-        "pricing.totalCents": totalCents,
-        updatedAt: new Date(),
-      });
+      for (const orderId of orderIds) {
+        const orderRef = db.collection("orders").doc(orderId);
+        const orderSnap = await orderRef.get();
+        if (!orderSnap.exists) {
+          throw new functions.https.HttpsError("not-found", `Order ${orderId} not found.`);
+        }
+        const order = orderSnap.data() as Order;
+
+        if (order.userId !== context.auth.uid) {
+          throw new functions.https.HttpsError(
+            "permission-denied",
+            "You do not have permission to pay for this order."
+          );
+        }
+        if (order.status !== "pending_payment") {
+          throw new functions.https.HttpsError(
+            "failed-precondition",
+            `Order ${orderId} status is '${order.status}', not payable.`
+          );
+        }
+
+        // Read authoritative price from Firestore product document
+        const productSnap = await db.collection("products").doc(order.productId).get();
+        if (!productSnap.exists) {
+          throw new functions.https.HttpsError("not-found", `Product for order ${orderId} not found.`);
+        }
+        const serverPrice = productSnap.data()?.priceInCents as number;
+        const shippingCents = 999;
+        const taxCents = Math.round(serverPrice * 0.08);
+        const totalCents = serverPrice + shippingCents + taxCents;
+
+        combinedTotalCents += totalCents;
+        orderUpdates.push({
+          ref: orderRef,
+          pricing: {
+            "pricing.subtotalCents": serverPrice,
+            "pricing.shippingCents": shippingCents,
+            "pricing.taxCents": taxCents,
+            "pricing.totalCents": totalCents,
+          },
+        });
+      }
 
       // Create ephemeral key for PaymentSheet customer session
       const ephemeralKey = await stripe.ephemeralKeys.create(
@@ -118,25 +117,31 @@ export const createPaymentIntent = functions
         { apiVersion: "2024-12-18.acacia" }
       );
 
-      // Create PaymentIntent
+      // Create single PaymentIntent for the combined total
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: totalCents,
+        amount: combinedTotalCents,
         currency: "usd",
         customer: stripeCustomerId,
         metadata: {
-          orderId,
+          orderIds: JSON.stringify(orderIds),
+          orderId: orderIds[0], // backward compat
           userId: context.auth.uid,
-          productId: order.productId,
         },
         automatic_payment_methods: { enabled: true },
       });
 
-      // Store payment intent ID on the order (not yet paid — webhook confirms)
-      await orderRef.update({
-        "payment.stripePaymentIntentId": paymentIntent.id,
-        "payment.status": "created",
-        updatedAt: new Date(),
-      });
+      // Update all orders with server-computed pricing and payment intent ID
+      const now = new Date();
+      await Promise.all(
+        orderUpdates.map(({ ref, pricing }) =>
+          ref.update({
+            ...pricing,
+            "payment.stripePaymentIntentId": paymentIntent.id,
+            "payment.status": "created",
+            updatedAt: now,
+          })
+        )
+      );
 
       return {
         clientSecret: paymentIntent.client_secret!,

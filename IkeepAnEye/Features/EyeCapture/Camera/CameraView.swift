@@ -3,13 +3,15 @@ import AVFoundation
 import PhotosUI
 
 struct CameraView: View {
-    let onCapture: (UIImage) -> Void
+    let onCapture: (EyePhoto) -> Void
 
     @StateObject private var sessionManager = CameraSessionManager()
+    @StateObject private var uploadService = EyeUploadService()
     @State private var capturedImage: UIImage?
     @State private var isCapturing = false
     @State private var photosPickerItem: PhotosPickerItem?
     @State private var ellipsePulse = false
+    @State private var uploadError: String?
     @Environment(\.dismiss) private var dismiss
 
     // True when there is no physical camera available (e.g. simulator on Mac Mini)
@@ -138,9 +140,20 @@ struct CameraView: View {
             if let img = capturedImage {
                 CropReviewView(
                     image: img,
-                    onAccept: { cropped in
+                    onAccept: { original, cropped, confidence in
                         capturedImage = nil
-                        onCapture(cropped)
+                        Task {
+                            do {
+                                let eyePhoto = try await uploadService.upload(
+                                    original: original,
+                                    cropped: cropped,
+                                    confidence: confidence
+                                )
+                                onCapture(eyePhoto)
+                            } catch {
+                                uploadError = error.localizedDescription
+                            }
+                        }
                     },
                     onRetake: {
                         capturedImage = nil
@@ -160,7 +173,8 @@ struct CameraView: View {
                 photosPickerItem = nil
             }
         }
-        .loadingOverlay(isCapturing)
+        .loadingOverlay(isCapturing || uploadService.isUploading)
+        .errorAlert(message: $uploadError)
         .onAppear {
             AnalyticsService.shared.track("eye_capture_started")
         }

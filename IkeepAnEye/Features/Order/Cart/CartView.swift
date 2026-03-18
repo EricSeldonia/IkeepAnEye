@@ -40,7 +40,7 @@ struct CartView: View {
 
             Section("Summary") {
                 PricingRow(label: "Subtotal", cents: viewModel.subtotal(items: cartStore.items))
-                PricingRow(label: "Shipping", cents: viewModel.shippingCost)
+                PricingRow(label: "Shipping", cents: viewModel.shippingCost(itemCount: cartStore.items.count))
                 PricingRow(label: "Tax (est.)", cents: viewModel.tax(items: cartStore.items))
                 PricingRow(label: "Total", cents: viewModel.total(items: cartStore.items), bold: true)
             }
@@ -53,12 +53,10 @@ struct CartView: View {
         }
         .navigationTitle("Cart")
         .navigationDestination(isPresented: Binding(
-            get: { viewModel.createdOrder != nil },
-            set: { if !$0 { viewModel.createdOrder = nil } }
+            get: { !viewModel.createdOrders.isEmpty },
+            set: { if !$0 { viewModel.createdOrders = [] } }
         )) {
-            if let order = viewModel.createdOrder {
-                CheckoutView(order: order)
-            }
+            CheckoutView(orders: viewModel.createdOrders)
         }
         .safeAreaInset(edge: .bottom) {
             Button("Proceed to Payment") {

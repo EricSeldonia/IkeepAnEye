@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 
 enum AuthState: Equatable {
     case loading
@@ -48,6 +49,18 @@ final class AuthService: ObservableObject {
 
     func sendPasswordReset(email: String) async throws {
         try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
+
+    // MARK: - Profile
+
+    func updateDisplayName(_ name: String) async throws {
+        guard let user = Auth.auth().currentUser else { throw AuthError.noCurrentUser }
+        let changeRequest = user.createProfileChangeRequest()
+        changeRequest.displayName = name
+        try await changeRequest.commitChanges()
+        try await Firestore.firestore()
+            .collection("users").document(user.uid)
+            .setData(["displayName": name], merge: true)
     }
 
     // MARK: - Sign Out

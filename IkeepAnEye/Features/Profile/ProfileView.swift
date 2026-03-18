@@ -25,6 +25,7 @@ struct ProfileView: View {
             }
 
             Section("Account") {
+                NavigationLink("Edit Profile") { EditProfileView() }
                 NavigationLink("Manage Eye Photos") { ManageEyePhotosView() }
                 NavigationLink("Shipping Addresses") { ShippingAddressView() }
             }

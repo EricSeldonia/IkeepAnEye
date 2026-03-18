@@ -43,6 +43,7 @@
 		73F9F8ED66F6A3DBC04BD382 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3EA27A5D07F298D65814D /* AppDelegate.swift */; };
 		74C0ED414F8C8FF07C4E4D93 /* UIImage+Crop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F283F3DE0E9A47C21C5A43 /* UIImage+Crop.swift */; };
 		74FC75958837E59182A2399B /* View+Modifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E6E8F3C396B76D0C7C7A4B /* View+Modifiers.swift */; };
+		75B32924A4EA2C21DE7EE2EE /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B09171589BC2DD33B75449 /* EditProfileView.swift */; };
 		76BE29296448F0B49ACAAE30 /* EyePhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99A9DB5778928A762846F95 /* EyePhoto.swift */; };
 		7A1AFD3E9EC7F5C21DB89E40 /* EyeRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64DF3D76D2FCD9041EA1224C /* EyeRegion.swift */; };
 		86FF726D0DD82F862423AD14 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 582C2FE16C184D7A3E739EB6 /* FirebaseFunctions */; };
@@ -126,6 +127,7 @@
 		C19182227BABF719C31F04DA /* CameraSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSessionManager.swift; sourceTree = "<group>"; };
 		C5942C453159F07A34CEBCFE /* IkeepAnEyeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeepAnEyeApp.swift; sourceTree = "<group>"; };
 		C6E6E8F3C396B76D0C7C7A4B /* View+Modifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Modifiers.swift"; sourceTree = "<group>"; };
+		C8B09171589BC2DD33B75449 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		C9E634ACB6C5D3AA6F9F3781 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CFAAABBC695C36367A9D2073 /* RootCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootCoordinator.swift; sourceTree = "<group>"; };
 		D9903E43FED9E4940B878ED8 /* CartItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartItem.swift; sourceTree = "<group>"; };
@@ -444,6 +446,7 @@
 		D8F2A0385BBB67AB4D64F584 /* Profile */ = {
 			isa = PBXGroup;
 			children = (
+				C8B09171589BC2DD33B75449 /* EditProfileView.swift */,
 				1136B16A2447CCBB3DF50947 /* ManageEyePhotosView.swift */,
 				73D4BA56B55EDBA290A714D8 /* ProfileView.swift */,
 				41886FFA3C37392C8AABDEC4 /* ShippingAddressView.swift */,
@@ -609,6 +612,7 @@
 				E624B2205FCC34E666B1749D /* CheckoutView.swift in Sources */,
 				8A569F4C6C31B72E7CC36B32 /* CropAdjustmentOverlay.swift in Sources */,
 				606581DF2AEF1D8446B03649 /* CropReviewView.swift in Sources */,
+				75B32924A4EA2C21DE7EE2EE /* EditProfileView.swift in Sources */,
 				B3D2900426AE218B27ACFE93 /* EyeDetectionService.swift in Sources */,
 				76BE29296448F0B49ACAAE30 /* EyePhoto.swift in Sources */,
 				7A1AFD3E9EC7F5C21DB89E40 /* EyeRegion.swift in Sources */,

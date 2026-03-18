@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct OrderConfirmationView: View {
-    let order: Order
+    let orders: [Order]
     @EnvironmentObject private var cartStore: CartStore
+
+    private var primaryOrder: Order? { orders.first }
 
     var body: some View {
         VStack(spacing: 28) {
@@ -15,7 +17,11 @@ struct OrderConfirmationView: View {
             VStack(spacing: 8) {
                 Text("Order Confirmed!")
                     .font(.title.bold())
-                if let id = order.id {
+                if orders.count > 1 {
+                    Text("\(orders.count) items ordered")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else if let id = primaryOrder?.id {
                     Text("Order #\(id.prefix(8).uppercased())")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -32,19 +38,21 @@ struct OrderConfirmationView: View {
             .multilineTextAlignment(.center)
             .padding(.horizontal)
 
-            VStack(spacing: 4) {
-                HStack {
-                    Text("Shipping to:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Spacer()
+            if let shipping = primaryOrder?.shipping {
+                VStack(spacing: 4) {
+                    HStack {
+                        Text("Shipping to:")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    Text(shipping.formatted)
+                        .font(.subheadline)
                 }
-                Text(order.shipping.formatted)
-                    .font(.subheadline)
+                .padding()
+                .cardStyle()
+                .padding(.horizontal)
             }
-            .padding()
-            .cardStyle()
-            .padding(.horizontal)
 
             Spacer()
 
@@ -57,7 +65,7 @@ struct OrderConfirmationView: View {
             .padding(.bottom, 32)
         }
         .onAppear {
-            let orderIds = [order.id].compactMap { $0 }
+            let orderIds = orders.compactMap { $0.id }
             AnalyticsService.shared.track("payment_completed", payload: [
                 "orderIds": orderIds,
             ])

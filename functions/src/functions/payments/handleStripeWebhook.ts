@@ -43,33 +43,48 @@ export const handleStripeWebhook = functions
     switch (event.type) {
       case "payment_intent.succeeded": {
         const pi = event.data.object as any;
-        const orderId = pi.metadata?.orderId;
-        if (orderId) {
-          await db
-            .collection("orders")
-            .doc(orderId)
-            .update({
-              status: "paid",
-              "payment.status": "succeeded",
-              "payment.stripeChargeId": pi.latest_charge ?? null,
-              "payment.paidAt": new Date(),
-              updatedAt: new Date(),
-            });
-          await notificationService.sendOrderPaidConfirmation(orderId);
-          console.log(`Order ${orderId} marked as paid`);
+        const orderIds: string[] = pi.metadata?.orderIds
+          ? JSON.parse(pi.metadata.orderIds)
+          : pi.metadata?.orderId
+          ? [pi.metadata.orderId]
+          : [];
+        if (orderIds.length > 0) {
+          const now = new Date();
+          await Promise.all(
+            orderIds.map((orderId) =>
+              db.collection("orders").doc(orderId).update({
+                status: "paid",
+                "payment.status": "succeeded",
+                "payment.stripeChargeId": pi.latest_charge ?? null,
+                "payment.paidAt": now,
+                updatedAt: now,
+              })
+            )
+          );
+          await notificationService.sendOrderPaidConfirmation(orderIds[0]);
+          console.log(`Orders marked as paid: ${orderIds.join(", ")}`);
         }
         break;
       }
 
       case "payment_intent.payment_failed": {
         const pi = event.data.object as any;
-        const orderId = pi.metadata?.orderId;
-        if (orderId) {
-          await db.collection("orders").doc(orderId).update({
-            "payment.status": "failed",
-            updatedAt: new Date(),
-          });
-          console.log(`Payment failed for order ${orderId}`);
+        const orderIds: string[] = pi.metadata?.orderIds
+          ? JSON.parse(pi.metadata.orderIds)
+          : pi.metadata?.orderId
+          ? [pi.metadata.orderId]
+          : [];
+        if (orderIds.length > 0) {
+          const now = new Date();
+          await Promise.all(
+            orderIds.map((orderId) =>
+              db.collection("orders").doc(orderId).update({
+                "payment.status": "failed",
+                updatedAt: now,
+              })
+            )
+          );
+          console.log(`Payment failed for orders: ${orderIds.join(", ")}`);
         }
         break;
       }

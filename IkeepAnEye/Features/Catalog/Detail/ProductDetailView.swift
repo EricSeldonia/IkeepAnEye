@@ -9,9 +9,15 @@ struct ProductDetailView: View {
     @EnvironmentObject private var cartStore: CartStore
     @State private var showEyeCapture = false
     @State private var selectedImageIndex = 0
-    @State private var selectedEyePhoto: EyePhoto?
+    @State private var selectedEyePhotoIds: Set<String> = []
     @State private var showAddedToast = false
     @State private var showSignInRequired = false
+
+    private var selectedEyePhotos: [EyePhoto] {
+        viewModel.eyePhotos.filter { photo in
+            photo.id.map { selectedEyePhotoIds.contains($0) } ?? false
+        }
+    }
 
     init(product: Product) {
         self.product = product
@@ -83,8 +89,8 @@ struct ProductDetailView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                // "None" option
-                                Button { selectedEyePhoto = nil } label: {
+                                // "None" option — clears all selections
+                                Button { selectedEyePhotoIds.removeAll() } label: {
                                     VStack(spacing: 4) {
                                         ZStack {
                                             Ellipse()
@@ -95,7 +101,7 @@ struct ProductDetailView: View {
                                         }
                                         .overlay(
                                             Ellipse().stroke(
-                                                selectedEyePhoto == nil ? Color("BrandRose") : Color.clear,
+                                                selectedEyePhotoIds.isEmpty ? Color("BrandRose") : Color.clear,
                                                 lineWidth: 3
                                             )
                                         )
@@ -106,13 +112,20 @@ struct ProductDetailView: View {
                                 }
                                 .buttonStyle(.plain)
 
-                                // Stored eye photos
+                                // Stored eye photos — tap to toggle selection
                                 ForEach(viewModel.eyePhotos) { photo in
-                                    Button { selectedEyePhoto = photo } label: {
+                                    Button {
+                                        guard let pid = photo.id else { return }
+                                        if selectedEyePhotoIds.contains(pid) {
+                                            selectedEyePhotoIds.remove(pid)
+                                        } else {
+                                            selectedEyePhotoIds.insert(pid)
+                                        }
+                                    } label: {
                                         VStack(spacing: 4) {
                                             EyeThumbnailView(
                                                 photo: photo,
-                                                isSelected: selectedEyePhoto?.id == photo.id
+                                                isSelected: photo.id.map { selectedEyePhotoIds.contains($0) } ?? false
                                             )
                                             Text("Eye")
                                                 .font(.caption2)
@@ -143,7 +156,7 @@ struct ProductDetailView: View {
                             .padding(.vertical, 4)
                         }
 
-                        if let eye = selectedEyePhoto {
+                        if selectedEyePhotos.count == 1, let eye = selectedEyePhotos.first {
                             if Auth.auth().currentUser != nil {
                                 NavigationLink(destination: PendantPreviewView(
                                     product: product,
@@ -160,7 +173,13 @@ struct ProductDetailView: View {
 
                         Button {
                             if Auth.auth().currentUser != nil {
-                                cartStore.add(CartItem(product: product, eyePhoto: selectedEyePhoto))
+                                if selectedEyePhotos.isEmpty {
+                                    cartStore.add(CartItem(product: product, eyePhoto: nil))
+                                } else {
+                                    for photo in selectedEyePhotos {
+                                        cartStore.add(CartItem(product: product, eyePhoto: photo))
+                                    }
+                                }
                                 withAnimation { showAddedToast = true }
                                 Task {
                                     try? await Task.sleep(nanoseconds: 2_000_000_000)
@@ -170,7 +189,8 @@ struct ProductDetailView: View {
                                 showSignInRequired = true
                             }
                         } label: {
-                            Text("Add to Cart")
+                            let count = selectedEyePhotos.count
+                            Text(count > 1 ? "Add \(count) to Cart" : "Add to Cart")
                         }
                         .buttonStyle(PrimaryButtonStyle())
                     }
@@ -189,9 +209,10 @@ struct ProductDetailView: View {
         }
         .task { await viewModel.loadEyePhotos() }
         .fullScreenCover(isPresented: $showEyeCapture) {
-            CameraView(onCapture: { _ in
+            CameraView(onCapture: { eyePhoto in
                 showEyeCapture = false
-                Task { await viewModel.loadEyePhotos() }
+                viewModel.eyePhotos.insert(eyePhoto, at: 0)
+                if let pid = eyePhoto.id { selectedEyePhotoIds.insert(pid) }
             })
         }
         .sheet(isPresented: $showSignInRequired) {
@@ -199,7 +220,8 @@ struct ProductDetailView: View {
         }
         .overlay(alignment: .bottom) {
             if showAddedToast {
-                Text("Added to cart!")
+                let count = max(selectedEyePhotos.count, 1)
+                Text(count > 1 ? "\(count) items added to cart!" : "Added to cart!")
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)

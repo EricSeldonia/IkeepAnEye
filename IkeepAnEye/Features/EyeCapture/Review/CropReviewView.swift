@@ -2,12 +2,13 @@ import SwiftUI
 
 struct CropReviewView: View {
     let image: UIImage
-    let onAccept: (UIImage) -> Void
+    let onAccept: (UIImage, UIImage, Double) -> Void
     let onRetake: () -> Void
 
     @State private var cropRect: CGRect = .zero
     @State private var isDetecting = true
     @State private var viewSize: CGSize = .zero
+    @State private var detectionConfidence: Double = 0
 
     private let detectionService = EyeDetectionService()
 
@@ -70,8 +71,8 @@ struct CropReviewView: View {
     private func runDetection(in containerSize: CGSize) async {
         do {
             let region = try await detectionService.detect(in: image)
-            // Update crop rect with detected eye position
             cropRect = imageRectToViewRect(region.rect, containerSize: containerSize)
+            detectionConfidence = region.confidence
         } catch {
             // Detection failed — default crop set in onAppear remains active
         }
@@ -95,7 +96,7 @@ struct CropReviewView: View {
         let imageRect = viewRectToImageRect(cropRect)
         guard let cropped = image.cropped(to: imageRect) else { return }
         AnalyticsService.shared.track("eye_capture_completed")
-        onAccept(cropped.ovalCropped)
+        onAccept(image, cropped.ovalCropped, detectionConfidence)
     }
 
     // MARK: - Coordinate conversion

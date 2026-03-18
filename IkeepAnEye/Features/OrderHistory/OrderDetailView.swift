@@ -132,7 +132,7 @@ struct OrderDetailView: View {
                     .padding()
                 }
                 .navigationDestination(isPresented: $showCheckout) {
-                    CheckoutView(order: order)
+                    CheckoutView(orders: [order])
                 }
             }
         }

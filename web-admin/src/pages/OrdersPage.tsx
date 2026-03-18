@@ -18,10 +18,32 @@ function fmt(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+type SortKey = "id" | "customer" | "total" | "status" | "date";
+type SortDir = "asc" | "desc";
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  return (
+    <span className="ml-1 inline-block text-[10px] leading-none">
+      {active ? (dir === "asc" ? "▲" : "▼") : <span className="text-gray-300">▲▼</span>}
+    </span>
+  );
+}
+
 export default function OrdersPage() {
   const { orders, loading } = useOrders();
   const [tab, setTab] = useState<OrderStatus | "all">("all");
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
 
   if (loading) return <p className="text-gray-500">Loading…</p>;
 
@@ -35,6 +57,28 @@ export default function OrdersPage() {
         o.productSnapshot?.name?.toLowerCase().includes(q) ||
         o.shipping?.name?.toLowerCase().includes(q)
       );
+    })
+    .slice()
+    .sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "id":
+          cmp = a.id.localeCompare(b.id);
+          break;
+        case "customer":
+          cmp = (a.shipping?.name ?? "").localeCompare(b.shipping?.name ?? "");
+          break;
+        case "total":
+          cmp = (a.pricing?.totalCents ?? 0) - (b.pricing?.totalCents ?? 0);
+          break;
+        case "status":
+          cmp = a.status.localeCompare(b.status);
+          break;
+        case "date":
+          cmp = (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0);
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
     });
 
   return (
@@ -73,13 +117,32 @@ export default function OrdersPage() {
         <table className="min-w-full divide-y divide-gray-100">
           <thead>
             <tr className="text-left text-xs text-gray-500 uppercase tracking-wide">
-              <th className="px-6 py-3">Order ID</th>
-              <th className="px-6 py-3">Customer</th>
-              <th className="px-6 py-3">Product</th>
-              <th className="px-6 py-3">Eye</th>
-              <th className="px-6 py-3">Total</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Date</th>
+              {(
+                [
+                  { label: "Order ID", key: "id" },
+                  { label: "Customer", key: "customer" },
+                  { label: "Product", key: null },
+                  { label: "Eye", key: null },
+                  { label: "Total", key: "total" },
+                  { label: "Status", key: "status" },
+                  { label: "Date", key: "date" },
+                ] as { label: string; key: SortKey | null }[]
+              ).map(({ label, key }) =>
+                key ? (
+                  <th
+                    key={label}
+                    className="px-6 py-3 cursor-pointer select-none hover:text-gray-800"
+                    onClick={() => handleSort(key)}
+                  >
+                    {label}
+                    <SortIcon active={sortKey === key} dir={sortDir} />
+                  </th>
+                ) : (
+                  <th key={label} className="px-6 py-3">
+                    {label}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">

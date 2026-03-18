@@ -18,10 +18,10 @@ final class StripeService: ObservableObject {
     }
 
     /// Calls the `createPaymentIntent` Cloud Function and returns a configured PaymentSheet.
-    func makePaymentSheet(for orderId: String) async throws -> PaymentSheet {
+    func makePaymentSheet(for orderIds: [String]) async throws -> PaymentSheet {
         let response: PaymentIntentResponse = try await functionsClient.call(
             name: "createPaymentIntent",
-            data: ["orderId": orderId]
+            data: ["orderIds": orderIds]
         )
 
         // Set the publishable key before presenting PaymentSheet
